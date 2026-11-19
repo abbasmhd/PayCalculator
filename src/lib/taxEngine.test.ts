@@ -6,6 +6,7 @@ import {
   calculateHECS,
   calculatePeriodPAYG,
   calculatePayroll,
+  getConcessionalCap,
   getEffectivePeriods,
   estimateYtdTaxRefund,
   type PayrollInput
@@ -467,5 +468,24 @@ describe('Novated Car Lease', () => {
     });
     expect(billRes.mls).toBeCloseTo(120000 * 0.0125, 2);
     expect(billRes.refundOrBill).toBeLessThan(0);
+  });
+});
+
+describe('getConcessionalCap', () => {
+  it('returns $25,000 for 2020-21', () => {
+    expect(getConcessionalCap('2020-21')).toBe(25000);
+  });
+
+  it('returns $27,500 for 2021-22 through 2023-24', () => {
+    expect(getConcessionalCap('2021-22')).toBe(27500);
+    expect(getConcessionalCap('2022-23')).toBe(27500);
+    expect(getConcessionalCap('2023-24')).toBe(27500);
+  });
+
+  it('returns $30,000 for 2024-25 through 2027-28', () => {
+    expect(getConcessionalCap('2024-25')).toBe(30000);
+    expect(getConcessionalCap('2025-26')).toBe(30000);
+    expect(getConcessionalCap('2026-27')).toBe(32500);
+    expect(getConcessionalCap('2027-28')).toBe(32500);
   });
 });

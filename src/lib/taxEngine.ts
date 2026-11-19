@@ -91,6 +91,13 @@ export function getEffectivePeriods(payCycle: PayCycle, workingWeeks?: number): 
   return (PERIODS_PER_YEAR[payCycle] || 52) * (weeks / 52);
 }
 
+export function getConcessionalCap(taxYear: TaxYear): number {
+  if (taxYear === '2020-21') return 25000;
+  if (taxYear === '2021-22' || taxYear === '2022-23' || taxYear === '2023-24') return 27500;
+  if (taxYear === '2024-25' || taxYear === '2025-26') return 30000;
+  return 32500;
+}
+
 export interface TaxBracket {
   name: string;
   max: number;

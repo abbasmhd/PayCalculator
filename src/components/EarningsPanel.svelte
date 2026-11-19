@@ -8,6 +8,7 @@
     superMode: SuperMode;
     superRate: number;
     voluntarySuper: number;
+    concessionalCap: number;
     effectivePeriods: number;
     leaveReserve: number;
     leavePayout: number;
@@ -25,6 +26,7 @@
     superMode = $bindable(),
     superRate = $bindable(),
     voluntarySuper = $bindable(),
+    concessionalCap,
     effectivePeriods,
     leaveReserve = $bindable(),
     leavePayout = $bindable(),
@@ -138,13 +140,14 @@
       </div>
       {#if true}
         {@const annualConcessional = (superAmount + Math.max(0, voluntarySuper || 0)) * effectivePeriods}
-        {@const capPct = Math.min(100, (annualConcessional / 30000) * 100)}
-        {@const overCap = annualConcessional > 30000}
+        {@const capPct = Math.min(100, (annualConcessional / concessionalCap) * 100)}
+        {@const overCap = annualConcessional > concessionalCap}
+        {@const capFormatted = `$${concessionalCap.toLocaleString('en-AU')}`}
         <div class="bg-zinc-50 rounded-md p-2 border border-zinc-200/80 space-y-1">
           <div class="flex items-center justify-between text-[11px]">
-            <span class="text-zinc-600 font-medium">Annual concessional cap ($30,000)</span>
+            <span class="text-zinc-600 font-medium">Annual concessional cap ({capFormatted})</span>
             <span class="font-bold tabular-nums {overCap ? 'text-rose-600' : 'text-zinc-800'}">
-              {formatAUD(annualConcessional)} / $30,000
+              {formatAUD(annualConcessional)} / {capFormatted}
             </span>
           </div>
           <div class="w-full h-1.5 bg-zinc-200 rounded-full overflow-hidden">
@@ -154,7 +157,7 @@
             ></div>
           </div>
           {#if overCap}
-            <p class="text-[10px] text-rose-600 font-medium">Exceeds $30,000 cap by {formatAUD(annualConcessional - 30000)}</p>
+            <p class="text-[10px] text-rose-600 font-medium">Exceeds {capFormatted} cap by {formatAUD(annualConcessional - concessionalCap)}</p>
           {/if}
         </div>
       {/if}

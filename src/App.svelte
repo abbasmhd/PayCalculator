@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     calculatePayroll,
+    getConcessionalCap,
     getTaxBrackets,
     PERIODS_PER_YEAR,
     type AdminFeeMode,
@@ -571,6 +572,7 @@
         bind:superMode
         bind:superRate
         bind:voluntarySuper
+        concessionalCap={getConcessionalCap(taxYear)}
         effectivePeriods={result.effectivePeriods}
         bind:leaveReserve
         bind:leavePayout
