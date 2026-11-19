@@ -247,7 +247,7 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
   const units = Math.max(0, input.unitsWorked || 0);
   const rate = Math.max(0, input.unitRate || 0);
   const superPct = Math.max(0, input.superRate || 0);
-  const leaveReserve = Math.max(0, input.leaveReserve || 0);
+  const leaveReserve = input.leaveReserve || 0;
   const adminInput = Math.max(0, input.adminFeeInput || 0);
 
   const baseGross = units * rate;

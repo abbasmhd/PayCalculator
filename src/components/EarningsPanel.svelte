@@ -123,7 +123,6 @@
         type="number"
         bind:value={leaveReserve}
         step="10"
-        min="0"
         class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
       />
     </div>

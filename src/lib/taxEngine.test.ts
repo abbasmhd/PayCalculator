@@ -225,4 +225,16 @@ describe('ATO Schedule 1 Statement of Formulas (Scale 2)', () => {
     );
     expect(calculatePeriodPAYG(2863.13 * 52, { ...baseOpts, payCycle: 'annually' })).toBe(weekly * 52);
   });
+
+  it('calculates Payslip 4 (W/E 11 OCT 26) with negative leaveReserve (-7500)', () => {
+    const res = calculatePayroll({
+      ...defaultInput,
+      unitsWorked: 32,
+      hourlyRate: 124.61,
+      leaveReserve: -7500,
+      expenseItems: []
+    });
+    expect(res.clmTaxable).toBeCloseTo(10990.5, 1);
+    expect(res.clmPAYGTax).toBe(4515);
+  });
 });
