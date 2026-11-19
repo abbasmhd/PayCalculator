@@ -35,7 +35,7 @@
         class="h-4 w-4 rounded border-zinc-300 text-[#0F4C3A] focus:ring-[#0F4C3A] cursor-pointer"
         aria-label="Novated car lease"
       />
-      <span class="text-xs font-semibold text-zinc-700">{carLeaseEnabled ? 'Enabled' : 'Disabled'}</span>
+      <span class="text-xs font-semibold text-zinc-700">{carLeaseEnabled ? 'Hide' : 'Show'}</span>
     </label>
   </div>
 

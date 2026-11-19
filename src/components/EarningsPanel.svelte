@@ -7,6 +7,8 @@
     unitRate: number;
     superMode: SuperMode;
     superRate: number;
+    voluntarySuper: number;
+    effectivePeriods: number;
     leaveReserve: number;
     leavePayout: number;
     adminFeeMode: AdminFeeMode;
@@ -22,6 +24,8 @@
     unitRate = $bindable(),
     superMode = $bindable(),
     superRate = $bindable(),
+    voluntarySuper = $bindable(),
+    effectivePeriods,
     leaveReserve = $bindable(),
     leavePayout = $bindable(),
     adminFeeMode = $bindable(),
@@ -111,6 +115,49 @@
         <span class="absolute right-2.5 top-2 text-xs text-zinc-400 font-bold">%</span>
       </div>
       <span class="text-xs font-bold text-rose-600 w-24 text-right tabular-nums">-{formatAUD(superAmount)}</span>
+    </div>
+
+    <!-- Voluntary / Salary-Sacrificed Super & $30k Cap Tracker -->
+    <div class="pt-2 space-y-1.5">
+      <div class="flex items-center justify-between">
+        <label for="input-voluntary-super" class="text-xs font-semibold text-zinc-700">Voluntary / salary-sacrificed super</label>
+        {#if voluntarySuper > 0}
+          <button onclick={() => (voluntarySuper = 0)} class="text-[11px] font-semibold text-[#0F4C3A] hover:underline cursor-pointer">Set to $0</button>
+        {/if}
+      </div>
+      <div class="relative">
+        <span class="absolute left-3 top-2 text-xs text-zinc-400 font-bold">$</span>
+        <input
+          id="input-voluntary-super"
+          type="number"
+          bind:value={voluntarySuper}
+          min="0"
+          step="25"
+          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+        />
+      </div>
+      {#if true}
+        {@const annualConcessional = (superAmount + Math.max(0, voluntarySuper || 0)) * effectivePeriods}
+        {@const capPct = Math.min(100, (annualConcessional / 30000) * 100)}
+        {@const overCap = annualConcessional > 30000}
+        <div class="bg-zinc-50 rounded-md p-2 border border-zinc-200/80 space-y-1">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-zinc-600 font-medium">Annual concessional cap ($30,000)</span>
+            <span class="font-bold tabular-nums {overCap ? 'text-rose-600' : 'text-zinc-800'}">
+              {formatAUD(annualConcessional)} / $30,000
+            </span>
+          </div>
+          <div class="w-full h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+            <div
+              class="h-full transition-all {overCap ? 'bg-rose-500' : 'bg-[#0F4C3A]'}"
+              style="width: {capPct}%"
+            ></div>
+          </div>
+          {#if overCap}
+            <p class="text-[10px] text-rose-600 font-medium">Exceeds $30,000 cap by {formatAUD(annualConcessional - 30000)}</p>
+          {/if}
+        </div>
+      {/if}
     </div>
   </div>
 

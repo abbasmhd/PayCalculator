@@ -23,8 +23,11 @@
   import MultiPeriodTable from './components/MultiPeriodTable.svelte';
   import ComparisonTable from './components/ComparisonTable.svelte';
   import Visualizations from './components/Visualizations.svelte';
+  import YtdRefundPanel from './components/YtdRefundPanel.svelte';
+  import ScenariosPanel, { type SavedScenario } from './components/ScenariosPanel.svelte';
 
   const STORAGE_KEY = 'paycalculator-au-state-v1';
+  const SCENARIOS_STORAGE_KEY = 'paycalculator-au-scenarios-v1';
 
   const DEFAULT_EXPENSE_ITEMS: ExpenseItem[] = [
     { id: 1, name: 'Portable Hardware', amount: 1372.0 },
@@ -33,6 +36,17 @@
 
   function loadSavedState(): Record<string, unknown> {
     try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get('s');
+        if (encoded) {
+          const json = decodeURIComponent(atob(encoded));
+          const parsed: unknown = JSON.parse(json);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return parsed as Record<string, unknown>;
+          }
+        }
+      }
       if (typeof localStorage === 'undefined') return {};
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return {};
@@ -53,6 +67,8 @@
   let unitRate = $state<number>((saved.unitRate as number) ?? 0);
   let superMode = $state<SuperMode>((saved.superMode as SuperMode) ?? 'inclusive');
   let superRate = $state<number>((saved.superRate as number) ?? 0);
+  let voluntarySuper = $state<number>((saved.voluntarySuper as number) ?? 0);
+  let workingWeeks = $state<number>((saved.workingWeeks as number) ?? 52);
   let leaveReserve = $state<number>((saved.leaveReserve as number) ?? 0);
   let leavePayout = $state<number>((saved.leavePayout as number) ?? 0);
   let adminFeeMode = $state<AdminFeeMode>((saved.adminFeeMode as AdminFeeMode) ?? 'percent');
@@ -88,6 +104,8 @@
           unitRate,
           superMode,
           superRate,
+          voluntarySuper,
+          workingWeeks,
           leaveReserve,
           leavePayout,
           adminFeeMode,
@@ -121,6 +139,8 @@
       unitRate,
       superMode,
       superRate,
+      voluntarySuper,
+      workingWeeks,
       leaveReserve,
       leavePayout,
       adminFeeMode,
@@ -160,7 +180,7 @@
       w: fn(currentPeriods / 52),
       f: fn(currentPeriods / 26),
       m: fn(currentPeriods / 12),
-      a: fn(currentPeriods)
+      a: fn(result.effectivePeriods)
     });
 
     const superRow =
@@ -238,7 +258,164 @@
   });
 
   function addExpenseRow() {
-    expenseItems.push({ id: nextExpenseId++, name: 'New Expense Claim', amount: 100.0 });
+    expenseItems.push({ id: nextExpenseId++, name: 'New Expense Claim', amount: 100.0, recurring: true });
+  }
+
+  function addExpensePreset(name: string, amount: number, recurring: boolean) {
+    expenseItems.push({ id: nextExpenseId++, name, amount, recurring });
+  }
+
+  function loadScenarios(): SavedScenario[] {
+    try {
+      if (typeof localStorage === 'undefined') return [];
+      const raw = localStorage.getItem(SCENARIOS_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as SavedScenario[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  let scenarios = $state<SavedScenario[]>(loadScenarios());
+  let shareCopied = $state(false);
+
+  $effect(() => {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(SCENARIOS_STORAGE_KEY, JSON.stringify(scenarios));
+    } catch {
+      // Ignore storage errors
+    }
+  });
+
+  function getCurrentInput(): import('./lib/taxEngine').PayrollInput {
+    return {
+      payCycle,
+      unitType,
+      unitsWorked,
+      unitRate,
+      superMode,
+      superRate,
+      voluntarySuper,
+      workingWeeks,
+      leaveReserve,
+      leavePayout,
+      adminFeeMode,
+      adminFeeInput,
+      paygMode,
+      customTaxMode,
+      customPaygVal,
+      taxYear,
+      residency,
+      hasHecs,
+      applyLito,
+      applyMedicare,
+      hasPrivateHealth,
+      expenseItems: expenseItems.map((i) => ({ ...i })),
+      carLeaseEnabled,
+      carLeaseType,
+      carLeasePerPeriod,
+      carBaseValue
+    };
+  }
+
+  function saveScenario(name: string) {
+    if (scenarios.length >= 3) return;
+    const totalSuperPerPeriod = result.superAmount + result.voluntarySuper;
+    const newScenario: SavedScenario = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name,
+      input: getCurrentInput(),
+      summary: {
+        clmNetPay: result.clmNetPay,
+        annualNetPay: result.annualNetPay,
+        totalSuperPerPeriod,
+        annualSuper: totalSuperPerPeriod * result.effectivePeriods,
+        paygTaxSaved: result.paygTaxSaved,
+        totalBenefitGotBack: result.totalBenefitGotBack
+      }
+    };
+    scenarios = [...scenarios, newScenario];
+  }
+
+  function loadScenario(sc: SavedScenario) {
+    const inp = sc.input;
+    payCycle = inp.payCycle;
+    unitType = inp.unitType;
+    unitsWorked = inp.unitsWorked;
+    unitRate = inp.unitRate;
+    superMode = inp.superMode;
+    superRate = inp.superRate;
+    voluntarySuper = inp.voluntarySuper ?? 0;
+    workingWeeks = inp.workingWeeks ?? 52;
+    leaveReserve = inp.leaveReserve;
+    leavePayout = inp.leavePayout ?? 0;
+    adminFeeMode = inp.adminFeeMode;
+    adminFeeInput = inp.adminFeeInput;
+    paygMode = inp.paygMode;
+    customTaxMode = inp.customTaxMode;
+    customPaygVal = inp.customPaygVal;
+    taxYear = inp.taxYear;
+    residency = inp.residency;
+    hasHecs = inp.hasHecs;
+    applyLito = inp.applyLito;
+    applyMedicare = inp.applyMedicare;
+    hasPrivateHealth = inp.hasPrivateHealth;
+    expenseItems = (inp.expenseItems || []).map((i) => ({ ...i }));
+    carLeaseEnabled = inp.carLeaseEnabled ?? false;
+    carLeaseType = inp.carLeaseType ?? 'ev';
+    carLeasePerPeriod = inp.carLeasePerPeriod ?? 0;
+    carBaseValue = inp.carBaseValue ?? 0;
+  }
+
+  function deleteScenario(id: string) {
+    scenarios = scenarios.filter((s) => s.id !== id);
+  }
+
+  function exportCsv() {
+    const lines: string[] = ['Pay Item,Weekly,Fortnightly,Monthly,Annual'];
+    for (const row of multiPeriodRows) {
+      if (row.isSection) {
+        lines.push(`"${row.name}",,,,`);
+      } else {
+        lines.push(
+          `"${row.name}",${row.w.toFixed(2)},${row.f.toFixed(2)},${row.m.toFixed(2)},${row.a.toFixed(2)}`
+        );
+      }
+    }
+    if (scenarios.length > 0) {
+      lines.push('');
+      lines.push('Saved Scenarios Comparison');
+      lines.push('Name,Net Take-Home (Period),Net Take-Home (Annual),Super (Period),Annual Super,PAYG Tax Saved,Total Benefit');
+      for (const sc of scenarios) {
+        lines.push(
+          `"${sc.name}",${sc.summary.clmNetPay.toFixed(2)},${sc.summary.annualNetPay.toFixed(2)},${sc.summary.totalSuperPerPeriod.toFixed(2)},${sc.summary.annualSuper.toFixed(2)},${sc.summary.paygTaxSaved.toFixed(2)},${sc.summary.totalBenefitGotBack.toFixed(2)}`
+        );
+      }
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `paycalculator-${taxYear}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyShareLink() {
+    try {
+      const encoded = btoa(encodeURIComponent(JSON.stringify(getCurrentInput())));
+      const url = new URL(window.location.href);
+      url.searchParams.set('s', encoded);
+      await navigator.clipboard.writeText(url.toString());
+      shareCopied = true;
+      setTimeout(() => {
+        shareCopied = false;
+      }, 2000);
+    } catch {
+      // Ignore clipboard errors
+    }
   }
 
   function removeExpenseItem(id: number) {
@@ -372,10 +549,16 @@
   }
 </script>
 
-<Header bind:taxYear onReset={resetDefaults} />
+<Header
+  bind:taxYear
+  onReset={resetDefaults}
+  onExportCsv={exportCsv}
+  onCopyShareLink={copyShareLink}
+  {shareCopied}
+/>
 
 <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-  <ControlBar bind:payCycle bind:unitType />
+  <ControlBar bind:payCycle bind:unitType bind:workingWeeks />
 
   <LedgerSummary {result} {cycleLabel} {activeBracketRate} />
 
@@ -387,6 +570,8 @@
         bind:unitRate
         bind:superMode
         bind:superRate
+        bind:voluntarySuper
+        effectivePeriods={result.effectivePeriods}
         bind:leaveReserve
         bind:leavePayout
         bind:adminFeeMode
@@ -413,6 +598,7 @@
         totalExGstClaimed={result.totalExGstClaimed}
         totalGstRefunded={result.totalGstRefunded}
         onAdd={addExpenseRow}
+        onAddPreset={addExpensePreset}
         onRemove={removeExpenseItem}
       />
 
@@ -429,6 +615,21 @@
 
     <div class="lg:col-span-7 space-y-5">
       <MultiPeriodTable rows={multiPeriodRows} />
+
+      <YtdRefundPanel
+        {taxYear}
+        {residency}
+        {applyLito}
+        {applyMedicare}
+        {hasPrivateHealth}
+      />
+
+      <ScenariosPanel
+        {scenarios}
+        onSave={saveScenario}
+        onLoad={loadScenario}
+        onDelete={deleteScenario}
+      />
 
       <ComparisonTable
         {result}

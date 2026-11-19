@@ -6,6 +6,8 @@ import {
   calculateHECS,
   calculatePeriodPAYG,
   calculatePayroll,
+  getEffectivePeriods,
+  estimateYtdTaxRefund,
   type PayrollInput
 } from './taxEngine';
 
@@ -406,5 +408,64 @@ describe('Novated Car Lease', () => {
     expect(result.clmTaxable).toBeCloseTo(result.stdTaxable - expectedPreTax, 2);
     expect(result.clmNetPay).toBeCloseTo(result.clmTaxable - result.clmPAYGTax - expectedPostTax, 2);
     expect(result.totalBenefitGotBack).toBeCloseTo(result.paygTaxSaved + expectedGstSaved, 2);
+  });
+
+  it('deducts voluntary / salary-sacrificed super from stdTaxable', () => {
+    const withoutVol = calculatePayroll(baseInput);
+    const withVol = calculatePayroll({ ...baseInput, voluntarySuper: 200 });
+    expect(withVol.voluntarySuper).toBe(200);
+    expect(withVol.stdTaxable).toBeCloseTo(withoutVol.stdTaxable - 200, 2);
+    expect(withVol.stdPAYGTax).toBeLessThan(withoutVol.stdPAYGTax);
+  });
+
+  it('scales annual projections by workingWeeks (1-52)', () => {
+    expect(getEffectivePeriods('weekly', 48)).toBe(48);
+    expect(getEffectivePeriods('fortnightly', 26)).toBe(13);
+    expect(getEffectivePeriods('annually', 40)).toBe(1);
+
+    const fullYear = calculatePayroll({ ...baseInput, workingWeeks: 52 });
+    const partYear = calculatePayroll({ ...baseInput, workingWeeks: 48 });
+    expect(partYear.effectivePeriods).toBe(48);
+    expect(partYear.annualNetPay).toBeCloseTo(partYear.clmNetPay * 48, 2);
+    expect(partYear.annualNetPay).toBeLessThan(fullYear.annualNetPay);
+  });
+
+  it('does not multiply one-off expenses by 52 in annual projections', () => {
+    const withOneOff = calculatePayroll({
+      ...baseInput,
+      expenseItems: [{ id: 1, name: 'Laptop', amount: 2200, recurring: false }]
+    });
+    const noExpenses = calculatePayroll(baseInput);
+    // Annual net pay should be 51 periods of base + 1 period with the one-off claim, NOT 52 * clmNetPay
+    expect(withOneOff.oneOffIncGstPaid).toBe(2200);
+    expect(withOneOff.annualNetPay).toBeCloseTo(noExpenses.clmNetPay * 51 + withOneOff.clmNetPay, 2);
+    expect(withOneOff.annualNetPay).toBeLessThan(withOneOff.clmNetPay * 52);
+  });
+
+  it('estimates YTD & end-of-year tax refund or bill', () => {
+    const refundRes = estimateYtdTaxRefund({
+      ytdGross: 100000,
+      ytdTaxWithheld: 30000,
+      taxYear: '2026-27',
+      residency: 'resident_tft',
+      applyLito: true,
+      applyMedicare: true,
+      hasPrivateHealth: true
+    });
+    expect(refundRes.estimatedTotalTax).toBeGreaterThan(0);
+    expect(refundRes.refundOrBill).toBeCloseTo(30000 - refundRes.estimatedTotalTax, 2);
+    expect(refundRes.refundOrBill).toBeGreaterThan(0);
+
+    const billRes = estimateYtdTaxRefund({
+      ytdGross: 120000,
+      ytdTaxWithheld: 10000,
+      taxYear: '2026-27',
+      residency: 'resident_tft',
+      applyLito: true,
+      applyMedicare: true,
+      hasPrivateHealth: false
+    });
+    expect(billRes.mls).toBeCloseTo(120000 * 0.0125, 2);
+    expect(billRes.refundOrBill).toBeLessThan(0);
   });
 });

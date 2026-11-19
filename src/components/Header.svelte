@@ -4,9 +4,18 @@
   interface Props {
     taxYear: TaxYear;
     onReset: () => void;
+    onExportCsv: () => void;
+    onCopyShareLink: () => void;
+    shareCopied?: boolean;
   }
 
-  let { taxYear = $bindable(), onReset }: Props = $props();
+  let {
+    taxYear = $bindable(),
+    onReset,
+    onExportCsv,
+    onCopyShareLink,
+    shareCopied = false
+  }: Props = $props();
 </script>
 
 <header class="bg-white border-b border-zinc-200 sticky top-0 z-50">
@@ -40,6 +49,22 @@
           <option value="2020-21">2020–21 (Stage 2)</option>
         </select>
       </div>
+
+      <button
+        type="button"
+        onclick={onExportCsv}
+        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
+      >
+        Export CSV
+      </button>
+
+      <button
+        type="button"
+        onclick={onCopyShareLink}
+        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0F4C3A] hover:bg-[#0a3629] text-white transition flex items-center gap-1.5 cursor-pointer"
+      >
+        {shareCopied ? 'Copied!' : 'Copy Share Link'}
+      </button>
 
       <button onclick={onReset} class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer">
         <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

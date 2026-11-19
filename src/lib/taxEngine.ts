@@ -15,6 +15,7 @@ export interface ExpenseItem {
   id: number;
   name: string;
   amount: number;
+  recurring?: boolean;
 }
 
 export interface PayrollInput {
@@ -24,6 +25,8 @@ export interface PayrollInput {
   unitRate: number;
   superMode: SuperMode;
   superRate: number;
+  voluntarySuper?: number;
+  workingWeeks?: number;
   leaveReserve: number;
   leavePayout?: number;
   adminFeeMode: AdminFeeMode;
@@ -47,12 +50,15 @@ export interface PayrollInput {
 export interface PayrollResult {
   baseGross: number;
   superAmount: number;
+  voluntarySuper: number;
   totalGrossTaxablePay: number;
   adminFee: number;
   stdTaxable: number;
   stdPAYGTax: number;
   stdNetPay: number;
   totalIncGstPaid: number;
+  recurringIncGstPaid: number;
+  oneOffIncGstPaid: number;
   totalExGstClaimed: number;
   totalGstRefunded: number;
   clmTaxable: number;
@@ -64,6 +70,7 @@ export interface PayrollResult {
   netPayDifference: number;
   annualNetPay: number;
   annualTaxable: number;
+  effectivePeriods: number;
   effectiveTaxRate: number;
   savingsPct: number;
   carLeasePreTax: number;
@@ -77,6 +84,12 @@ export const PERIODS_PER_YEAR: Record<PayCycle, number> = {
   monthly: 12,
   annually: 1
 };
+
+export function getEffectivePeriods(payCycle: PayCycle, workingWeeks?: number): number {
+  const weeks = Math.min(52, Math.max(1, workingWeeks ?? 52));
+  if (payCycle === 'annually') return 1;
+  return (PERIODS_PER_YEAR[payCycle] || 52) * (weeks / 52);
+}
 
 export interface TaxBracket {
   name: string;
@@ -354,21 +367,32 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
   }
 
   const adminFee = input.adminFeeMode === 'percent' ? baseGross * (adminInput / 100) : adminInput;
+  const voluntarySuper = Math.max(0, input.voluntarySuper || 0);
 
-  const stdTaxable = Math.max(0, totalGrossTaxablePay - leaveReserve + leavePayout - adminFee);
+  const stdTaxable = Math.max(0, totalGrossTaxablePay - leaveReserve + leavePayout - adminFee - voluntarySuper);
   const stdPAYGTax = calculatePeriodPAYG(stdTaxable, input);
   const stdNetPay = stdTaxable - stdPAYGTax;
 
   let totalIncGstPaid = 0;
+  let recurringIncGstPaid = 0;
+  let oneOffIncGstPaid = 0;
   let totalExGstClaimed = 0;
+  let recurringExGstClaimed = 0;
   for (const item of input.expenseItems) {
     const amt = Math.max(0, item.amount || 0);
     totalIncGstPaid += amt;
     totalExGstClaimed += amt / 1.1;
+    if (item.recurring === false) {
+      oneOffIncGstPaid += amt;
+    } else {
+      recurringIncGstPaid += amt;
+      recurringExGstClaimed += amt / 1.1;
+    }
   }
   const totalGstRefunded = totalIncGstPaid - totalExGstClaimed;
 
   const periods = PERIODS_PER_YEAR[input.payCycle] || 52;
+  const effectivePeriods = getEffectivePeriods(input.payCycle, input.workingWeeks);
   const carLeasePerPeriod = Math.max(0, input.carLeasePerPeriod || 0);
   let carLeasePreTax = 0;
   let carLeasePostTax = 0;
@@ -407,21 +431,43 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
   const netOutofPocketCost = Math.max(0, totalIncGstPaid - totalBenefitGotBack);
   const netPayDifference = clmNetPay - stdNetPay;
 
-  const annualNetPay = clmNetPay * periods;
-  const annualTaxable = clmTaxable * periods;
+  let recurringClmNetPay = clmNetPay;
+  if (oneOffIncGstPaid > 0 && effectivePeriods > 1) {
+    const recTaxable = Math.max(0, stdTaxable - recurringExGstClaimed - carLeasePreTax);
+    let recPAYGTax = 0;
+    if (input.paygMode === 'ato_post_deductions') {
+      recPAYGTax = calculatePeriodPAYG(recTaxable, input);
+    } else if (input.paygMode === 'ato_pre_expenses') {
+      recPAYGTax = calculatePeriodPAYG(stdTaxable, input);
+    } else {
+      const customVal = Math.max(0, input.customPaygVal || 0);
+      const rawCustomTax = input.customTaxMode === 'percent' ? recTaxable * (customVal / 100) : customVal;
+      recPAYGTax = Math.min(recTaxable, Math.max(0, rawCustomTax));
+    }
+    recurringClmNetPay = recTaxable - recPAYGTax + recurringIncGstPaid - carLeasePostTax;
+  }
 
-  const effectiveTaxRate = annualTaxable > 0 ? ((clmPAYGTax * periods) / annualTaxable) * 100 : 0;
+  const annualNetPay =
+    oneOffIncGstPaid > 0 && effectivePeriods >= 1
+      ? recurringClmNetPay * (effectivePeriods - 1) + clmNetPay
+      : clmNetPay * effectivePeriods;
+  const annualTaxable = clmTaxable * effectivePeriods;
+
+  const effectiveTaxRate = annualTaxable > 0 ? ((clmPAYGTax * effectivePeriods) / annualTaxable) * 100 : 0;
   const savingsPct = totalIncGstPaid > 0 ? (totalBenefitGotBack / totalIncGstPaid) * 100 : 0;
 
   return {
     baseGross,
     superAmount,
+    voluntarySuper,
     totalGrossTaxablePay,
     adminFee,
     stdTaxable,
     stdPAYGTax,
     stdNetPay,
     totalIncGstPaid,
+    recurringIncGstPaid,
+    oneOffIncGstPaid,
     totalExGstClaimed,
     totalGstRefunded,
     clmTaxable,
@@ -433,11 +479,69 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
     netPayDifference,
     annualNetPay,
     annualTaxable,
+    effectivePeriods,
     effectiveTaxRate,
     savingsPct,
     carLeasePreTax,
     carLeasePostTax,
     carLeaseGstSaved
+  };
+}
+
+export interface YtdRefundInput {
+  ytdGross: number;
+  ytdTaxWithheld: number;
+  taxYear: TaxYear;
+  residency: ResidencyStatus;
+  applyLito: boolean;
+  applyMedicare: boolean;
+  hasPrivateHealth: boolean;
+}
+
+export interface YtdRefundResult {
+  incomeTax: number;
+  medicareLevy: number;
+  mls: number;
+  lito: number;
+  estimatedTotalTax: number;
+  ytdTaxWithheld: number;
+  refundOrBill: number;
+}
+
+export function estimateYtdTaxRefund(input: YtdRefundInput): YtdRefundResult {
+  const gross = Math.max(0, input.ytdGross || 0);
+  const withheld = Math.max(0, input.ytdTaxWithheld || 0);
+  const incomeTax = getAnnualTax(gross, input.residency, input.taxYear);
+  const isResident = input.residency === 'resident_tft' || input.residency === 'resident_no_tft';
+
+  const medicareLevy = input.applyMedicare && isResident ? gross * 0.02 : 0;
+
+  let mlsRate = 0;
+  if (input.applyMedicare && isResident && !input.hasPrivateHealth && gross > 97000) {
+    if (gross <= 113000) mlsRate = 0.01;
+    else if (gross <= 151000) mlsRate = 0.0125;
+    else mlsRate = 0.015;
+  }
+  const mls = gross * mlsRate;
+
+  let lito = 0;
+  if (input.applyLito && isResident && gross > 0) {
+    if (gross <= 37500) lito = 700;
+    else if (gross <= 45000) lito = Math.max(0, 700 - (gross - 37500) * 0.05);
+    else if (gross <= 66667) lito = Math.max(0, 325 - (gross - 45000) * 0.015);
+  }
+
+  const estimatedTotalTax = Math.max(0, incomeTax - lito) + medicareLevy + mls;
+  const refundOrBill = withheld - estimatedTotalTax;
+
+  return {
+    incomeTax,
+    medicareLevy,
+    mls,
+    lito,
+    estimatedTotalTax,
+    ytdTaxWithheld: withheld,
+    refundOrBill
   };
 }
 
