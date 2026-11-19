@@ -23,31 +23,86 @@
   import ComparisonTable from './components/ComparisonTable.svelte';
   import Visualizations from './components/Visualizations.svelte';
 
-  let payCycle = $state<PayCycle>('weekly');
-  let unitType = $state<UnitType>('hourly');
-  let unitsWorked = $state<number>(40.0);
-  let unitRate = $state<number>(124.61);
-  let superMode = $state<SuperMode>('inclusive');
-  let superRate = $state<number>(12.0);
-  let leaveReserve = $state<number>(1500.0);
-  let leavePayout = $state<number>(0);
-  let adminFeeMode = $state<AdminFeeMode>('percent');
-  let adminFeeInput = $state<number>(1.75);
-  let paygMode = $state<PaygMode>('ato_post_deductions');
-  let customTaxMode = $state<CustomTaxMode>('dollar');
-  let customPaygVal = $state<number>(284.0);
-  let taxYear = $state<TaxYear>('2026-27');
-  let residency = $state<ResidencyStatus>('resident_tft');
-  let hasHecs = $state<boolean>(false);
-  let applyLito = $state<boolean>(true);
-  let applyMedicare = $state<boolean>(true);
-  let hasPrivateHealth = $state<boolean>(false);
+  const STORAGE_KEY = 'paycalculator-au-state-v1';
 
-  let nextExpenseId = 3;
-  let expenseItems = $state<ExpenseItem[]>([
+  const DEFAULT_EXPENSE_ITEMS: ExpenseItem[] = [
     { id: 1, name: 'Portable Hardware', amount: 1372.0 },
     { id: 2, name: 'Business Expenses', amount: 176.55 }
-  ]);
+  ];
+
+  function loadSavedState(): Record<string, unknown> {
+    try {
+      if (typeof localStorage === 'undefined') return {};
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed: unknown = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  const saved = loadSavedState();
+
+  let payCycle = $state<PayCycle>((saved.payCycle as PayCycle) ?? 'weekly');
+  let unitType = $state<UnitType>((saved.unitType as UnitType) ?? 'hourly');
+  let unitsWorked = $state<number>((saved.unitsWorked as number) ?? 0);
+  let unitRate = $state<number>((saved.unitRate as number) ?? 0);
+  let superMode = $state<SuperMode>((saved.superMode as SuperMode) ?? 'inclusive');
+  let superRate = $state<number>((saved.superRate as number) ?? 0);
+  let leaveReserve = $state<number>((saved.leaveReserve as number) ?? 0);
+  let leavePayout = $state<number>((saved.leavePayout as number) ?? 0);
+  let adminFeeMode = $state<AdminFeeMode>((saved.adminFeeMode as AdminFeeMode) ?? 'percent');
+  let adminFeeInput = $state<number>((saved.adminFeeInput as number) ?? 0);
+  let paygMode = $state<PaygMode>((saved.paygMode as PaygMode) ?? 'ato_post_deductions');
+  let customTaxMode = $state<CustomTaxMode>((saved.customTaxMode as CustomTaxMode) ?? 'dollar');
+  let customPaygVal = $state<number>((saved.customPaygVal as number) ?? 284.0);
+  let taxYear = $state<TaxYear>((saved.taxYear as TaxYear) ?? '2026-27');
+  let residency = $state<ResidencyStatus>((saved.residency as ResidencyStatus) ?? 'resident_tft');
+  let hasHecs = $state<boolean>((saved.hasHecs as boolean) ?? false);
+  let applyLito = $state<boolean>((saved.applyLito as boolean) ?? true);
+  let applyMedicare = $state<boolean>((saved.applyMedicare as boolean) ?? true);
+  let hasPrivateHealth = $state<boolean>((saved.hasPrivateHealth as boolean) ?? false);
+
+  let expenseItems = $state<ExpenseItem[]>(
+    Array.isArray(saved.expenseItems) ? (saved.expenseItems as ExpenseItem[]) : []
+  );
+  let nextExpenseId = Math.max(0, ...expenseItems.map((i) => i.id)) + 1;
+
+  $effect(() => {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          payCycle,
+          unitType,
+          unitsWorked,
+          unitRate,
+          superMode,
+          superRate,
+          leaveReserve,
+          leavePayout,
+          adminFeeMode,
+          adminFeeInput,
+          paygMode,
+          customTaxMode,
+          customPaygVal,
+          taxYear,
+          residency,
+          hasHecs,
+          applyLito,
+          applyMedicare,
+          hasPrivateHealth,
+          expenseItems
+        })
+      );
+    } catch {
+      // Ignore storage quota or serialization errors
+    }
+  });
 
   let result = $derived(
     calculatePayroll({
@@ -136,7 +191,7 @@
     ];
   });
 
-  let brackets = $derived(getTaxBrackets(residency));
+  let brackets = $derived(getTaxBrackets(residency, taxYear));
 
   let activeBracketRate = $derived.by(() => {
     const annual = result.annualTaxable;
@@ -212,14 +267,14 @@
 
     payCycle = 'weekly';
     unitType = 'hourly';
-    unitsWorked = 40.0;
-    unitRate = 124.61;
+    unitsWorked = 0;
+    unitRate = 0;
     superMode = 'inclusive';
     superRate = 12.0;
-    leaveReserve = 1500.0;
+    leaveReserve = 0;
     leavePayout = 0;
     adminFeeMode = 'percent';
-    adminFeeInput = 1.75;
+    adminFeeInput = 0;
     paygMode = 'ato_post_deductions';
     customTaxMode = 'dollar';
     customPaygVal = 284.0;
@@ -229,11 +284,8 @@
     applyLito = true;
     applyMedicare = true;
     hasPrivateHealth = false;
-    expenseItems = [
-      { id: 1, name: 'Portable Hardware', amount: 1372.0 },
-      { id: 2, name: 'Business Expenses', amount: 176.55 }
-    ];
-    nextExpenseId = 3;
+    expenseItems = [];
+    nextExpenseId = 1;
 
     showUndoToast = true;
     if (undoTimer) clearTimeout(undoTimer);

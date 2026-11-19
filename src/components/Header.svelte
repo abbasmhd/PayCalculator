@@ -30,8 +30,14 @@
       <div class="flex items-center gap-1.5 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200">
         <label for="select-tax-year" class="text-xs text-zinc-500 font-medium">Tax year:</label>
         <select id="select-tax-year" bind:value={taxYear} class="bg-transparent text-zinc-900 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
+          <option value="2027-28">2027–28 (Stage 3 — 14%)</option>
           <option value="2026-27">2026–27 (Stage 3)</option>
           <option value="2025-26">2025–26 (Stage 3)</option>
+          <option value="2024-25">2024–25 (Stage 3)</option>
+          <option value="2023-24">2023–24 (Stage 2)</option>
+          <option value="2022-23">2022–23 (Stage 2)</option>
+          <option value="2021-22">2021–22 (Stage 2)</option>
+          <option value="2020-21">2020–21 (Stage 2)</option>
         </select>
       </div>
 

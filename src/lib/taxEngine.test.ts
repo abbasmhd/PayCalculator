@@ -40,9 +40,18 @@ describe('ATO Stage 3 Tax Brackets', () => {
     expect(getAnnualTax(18200, '2025-26', 'resident_tft', true)).toBe(0);
   });
 
-  it('calculates 15% bracket for 2026-27 and 16% bracket for 2025-26 ($18,201 - $45,000)', () => {
+  it('calculates 14% bracket for 2027-28, 15% for 2026-27, and 16% for 2025-26 ($18,201 - $45,000)', () => {
+    expect(getAnnualTax(45000, '2027-28', 'resident_tft', true)).toBeCloseTo(3752, 2);
+    expect(getAnnualTax(45000, '2027-28', 'resident_no_tft', false)).toBeCloseTo(6300, 2);
     expect(getAnnualTax(45000, '2026-27', 'resident_tft', true)).toBeCloseTo(4020, 2);
     expect(getAnnualTax(45000, '2025-26', 'resident_tft', true)).toBeCloseTo(4288, 2);
+  });
+
+  it('returns 14% bracket in getTaxBrackets for 2027-28', () => {
+    const tftBrackets = getTaxBrackets('resident_tft', '2027-28');
+    expect(tftBrackets[1]).toEqual({ name: '$18,201 – $45,000', max: 45000, rate: 14 });
+    const noTftBrackets = getTaxBrackets('resident_no_tft', '2027-28');
+    expect(noTftBrackets[0]).toEqual({ name: '$0 – $45,000', max: 45000, rate: 14 });
   });
 
   it('calculates 30% bracket ($45,001 - $135,000)', () => {
@@ -74,6 +83,10 @@ describe('ATO Stage 3 Tax Brackets', () => {
     expect(calculatePeriodPAYG(2863.13, { ...base, taxYear: '2026-27' })).toBe(753);
     expect(calculatePeriodPAYG(1455.36, { ...base, taxYear: '2026-27' })).toBe(284);
     expect(calculatePeriodPAYG(10990.51, { ...base, taxYear: '2026-27' })).toBe(4510);
+
+    expect(calculatePeriodPAYG(2863.13, { ...base, taxYear: '2027-28' })).toBe(748);
+    expect(calculatePeriodPAYG(1455.36, { ...base, taxYear: '2027-28' })).toBe(279);
+    expect(calculatePeriodPAYG(10990.51, { ...base, taxYear: '2027-28' })).toBe(4505);
   });
 });
 
@@ -198,7 +211,8 @@ describe('Residency, HECS, MLS, and Brackets', () => {
 
   it('returns residency-specific tax brackets', () => {
     expect(getTaxBrackets('resident_tft')[0].rate).toBe(0);
-    expect(getTaxBrackets('resident_no_tft')[0].rate).toBe(16);
+    expect(getTaxBrackets('resident_no_tft', '2025-26')[0].rate).toBe(16);
+    expect(getTaxBrackets('resident_no_tft', '2026-27')[0].rate).toBe(15);
     expect(getTaxBrackets('whm')[0].rate).toBe(15);
     expect(getTaxBrackets('foreign_resident')[0].rate).toBe(30);
   });
@@ -262,5 +276,74 @@ describe('ATO Schedule 1 Statement of Formulas (Scale 2)', () => {
     });
     expect(res.clmTaxable).toBeCloseTo(10990.5, 1);
     expect(res.clmPAYGTax).toBe(4510);
+  });
+});
+
+describe('Stage 2 (2020-21 to 2023-24) and 2024-25 Tax Scales', () => {
+  it('uses the same Stage 3 rates for 2024-25 as 2025-26', () => {
+    expect(getAnnualTax(45000, '2024-25', 'resident_tft', true)).toBeCloseTo(4288, 2);
+    expect(getAnnualTax(100000, '2024-25', 'resident_tft', true)).toBeCloseTo(20788, 2);
+    expect(getTaxBrackets('resident_tft', '2024-25')).toEqual(getTaxBrackets('resident_tft', '2025-26'));
+    expect(
+      calculatePeriodPAYG(2863.13, {
+        payCycle: 'weekly',
+        residency: 'resident_tft',
+        taxYear: '2024-25',
+        applyLito: true,
+        applyMedicare: true,
+        hasHecs: false,
+        hasPrivateHealth: false
+      })
+    ).toBe(759);
+  });
+
+  it('calculates Stage 2 annual tax for resident_tft, resident_no_tft, and foreign_resident', () => {
+    for (const year of ['2020-21', '2023-24'] as const) {
+      expect(getAnnualTax(18200, year, 'resident_tft', true)).toBe(0);
+      expect(getAnnualTax(45000, year, 'resident_tft', true)).toBeCloseTo(5092, 2);
+      expect(getAnnualTax(120000, year, 'resident_tft', true)).toBeCloseTo(29467, 2);
+      expect(getAnnualTax(180000, year, 'resident_tft', true)).toBeCloseTo(51667, 2);
+      expect(getAnnualTax(200000, year, 'resident_tft', true)).toBeCloseTo(60667, 2);
+
+      expect(getAnnualTax(45000, year, 'resident_no_tft', false)).toBeCloseTo(8550, 2);
+      expect(getAnnualTax(120000, year, 'resident_no_tft', false)).toBeCloseTo(32925, 2);
+      expect(getAnnualTax(180000, year, 'resident_no_tft', false)).toBeCloseTo(55125, 2);
+      expect(getAnnualTax(200000, year, 'resident_no_tft', false)).toBeCloseTo(64125, 2);
+
+      expect(getAnnualTax(120000, year, 'foreign_resident', false)).toBeCloseTo(39000, 2);
+      expect(getAnnualTax(180000, year, 'foreign_resident', false)).toBeCloseTo(61200, 2);
+      expect(getAnnualTax(200000, year, 'foreign_resident', false)).toBeCloseTo(70200, 2);
+    }
+  });
+
+  it('returns Stage 2 tax brackets when taxYear is 2020-21..2023-24', () => {
+    const brackets = getTaxBrackets('resident_tft', '2023-24');
+    expect(brackets).toEqual([
+      { name: '$0 – $18,200', max: 18200, rate: 0 },
+      { name: '$18,201 – $45,000', max: 45000, rate: 19 },
+      { name: '$45,001 – $120,000', max: 120000, rate: 32.5 },
+      { name: '$120,001 – $180,000', max: 180000, rate: 37 },
+      { name: '$180,001+', max: 300000, rate: 45 }
+    ]);
+  });
+
+  it('calculates Stage 2 weekly PAYG from Stage 2 annual tax + 2% Medicare levy rounded to nearest dollar', () => {
+    const weekly = 2000;
+    const annual = weekly * 52; // 104,000
+    const expectedAnnualTax = 5092 + (annual - 45000) * 0.325;
+    const expectedMedicare = annual * 0.02;
+    const expectedWeeklyPayg = Math.round((expectedAnnualTax + expectedMedicare) / 52);
+
+    expect(
+      calculatePeriodPAYG(weekly, {
+        payCycle: 'weekly',
+        residency: 'resident_tft',
+        taxYear: '2021-22',
+        applyLito: true,
+        applyMedicare: true,
+        hasHecs: false,
+        hasPrivateHealth: false
+      })
+    ).toBe(expectedWeeklyPayg);
   });
 });

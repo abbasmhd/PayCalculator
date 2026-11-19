@@ -74,14 +74,6 @@
       startAngle += sliceAngle;
     }
 
-    ctx.fillStyle = '#111827';
-    ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Net Take-Home', cx, cy - 4);
-    ctx.font = '800 13px "Plus Jakarta Sans", sans-serif';
-    ctx.fillStyle = '#0F4C3A';
-    ctx.fillText(formatAUD(clmNetPay), cx, cy + 12);
-
     let ly = 35;
     for (const slice of data) {
       ctx.fillStyle = slice.color;

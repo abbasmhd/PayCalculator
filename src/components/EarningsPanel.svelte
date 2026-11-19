@@ -33,7 +33,7 @@
 
   function setAdminMode(mode: AdminFeeMode) {
     adminFeeMode = mode;
-    adminFeeInput = mode === 'percent' ? 1.75 : 87.23;
+    adminFeeInput = 0;
   }
 </script>
 

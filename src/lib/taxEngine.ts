@@ -5,7 +5,11 @@ export type AdminFeeMode = 'percent' | 'dollar';
 export type PaygMode = 'ato_post_deductions' | 'ato_pre_expenses' | 'custom_override';
 export type CustomTaxMode = 'dollar' | 'percent';
 export type ResidencyStatus = 'resident_tft' | 'resident_no_tft' | 'foreign_resident' | 'whm';
-export type TaxYear = '2026-27' | '2025-26';
+export type TaxYear = '2027-28' | '2026-27' | '2025-26' | '2024-25' | '2023-24' | '2022-23' | '2021-22' | '2020-21';
+
+function isStage2TaxYear(taxYear: TaxYear): boolean {
+  return taxYear === '2023-24' || taxYear === '2022-23' || taxYear === '2021-22' || taxYear === '2020-21';
+}
 
 export interface ExpenseItem {
   id: number;
@@ -73,7 +77,42 @@ export interface TaxBracket {
   rate: number;
 }
 
-export function getTaxBrackets(residency: ResidencyStatus): TaxBracket[] {
+export function getTaxBrackets(residency: ResidencyStatus, taxYear: TaxYear = '2026-27'): TaxBracket[] {
+  if (isStage2TaxYear(taxYear)) {
+    if (residency === 'foreign_resident') {
+      return [
+        { name: '$0 – $120,000', max: 120000, rate: 32.5 },
+        { name: '$120,001 – $180,000', max: 180000, rate: 37 },
+        { name: '$180,001+', max: 300000, rate: 45 }
+      ];
+    }
+    if (residency === 'whm') {
+      return [
+        { name: '$0 – $45,000', max: 45000, rate: 15 },
+        { name: '$45,001 – $120,000', max: 120000, rate: 32.5 },
+        { name: '$120,001 – $180,000', max: 180000, rate: 37 },
+        { name: '$180,001+', max: 300000, rate: 45 }
+      ];
+    }
+    if (residency === 'resident_no_tft') {
+      return [
+        { name: '$0 – $45,000', max: 45000, rate: 19 },
+        { name: '$45,001 – $120,000', max: 120000, rate: 32.5 },
+        { name: '$120,001 – $180,000', max: 180000, rate: 37 },
+        { name: '$180,001+', max: 300000, rate: 45 }
+      ];
+    }
+    return [
+      { name: '$0 – $18,200', max: 18200, rate: 0 },
+      { name: '$18,201 – $45,000', max: 45000, rate: 19 },
+      { name: '$45,001 – $120,000', max: 120000, rate: 32.5 },
+      { name: '$120,001 – $180,000', max: 180000, rate: 37 },
+      { name: '$180,001+', max: 300000, rate: 45 }
+    ];
+  }
+
+  const lowRate = taxYear === '2027-28' ? 14 : taxYear === '2026-27' ? 15 : 16;
+
   if (residency === 'foreign_resident') {
     return [
       { name: '$0 – $135,000', max: 135000, rate: 30 },
@@ -91,7 +130,7 @@ export function getTaxBrackets(residency: ResidencyStatus): TaxBracket[] {
   }
   if (residency === 'resident_no_tft') {
     return [
-      { name: '$0 – $45,000', max: 45000, rate: 16 },
+      { name: '$0 – $45,000', max: 45000, rate: lowRate },
       { name: '$45,001 – $135,000', max: 135000, rate: 30 },
       { name: '$135,001 – $190,000', max: 190000, rate: 37 },
       { name: '$190,001+', max: 300000, rate: 45 }
@@ -99,7 +138,7 @@ export function getTaxBrackets(residency: ResidencyStatus): TaxBracket[] {
   }
   return [
     { name: '$0 – $18,200', max: 18200, rate: 0 },
-    { name: '$18,201 – $45,000', max: 45000, rate: 16 },
+    { name: '$18,201 – $45,000', max: 45000, rate: lowRate },
     { name: '$45,001 – $135,000', max: 135000, rate: 30 },
     { name: '$135,001 – $190,000', max: 190000, rate: 37 },
     { name: '$190,001+', max: 300000, rate: 45 }
@@ -114,6 +153,34 @@ export function getAnnualTax(
 ): number {
   if (taxableIncome <= 0) return 0;
 
+  if (isStage2TaxYear(taxYear)) {
+    if (residency === 'foreign_resident') {
+      if (taxableIncome <= 120000) return taxableIncome * 0.325;
+      if (taxableIncome <= 180000) return 39000 + (taxableIncome - 120000) * 0.37;
+      return 61200 + (taxableIncome - 180000) * 0.45;
+    }
+
+    if (residency === 'whm') {
+      if (taxableIncome <= 45000) return taxableIncome * 0.15;
+      if (taxableIncome <= 120000) return 6750 + (taxableIncome - 45000) * 0.325;
+      if (taxableIncome <= 180000) return 31125 + (taxableIncome - 120000) * 0.37;
+      return 53325 + (taxableIncome - 180000) * 0.45;
+    }
+
+    if (!hasTft) {
+      if (taxableIncome <= 45000) return taxableIncome * 0.19;
+      if (taxableIncome <= 120000) return 8550 + (taxableIncome - 45000) * 0.325;
+      if (taxableIncome <= 180000) return 32925 + (taxableIncome - 120000) * 0.37;
+      return 55125 + (taxableIncome - 180000) * 0.45;
+    }
+
+    if (taxableIncome <= 18200) return 0;
+    if (taxableIncome <= 45000) return (taxableIncome - 18200) * 0.19;
+    if (taxableIncome <= 120000) return 5092 + (taxableIncome - 45000) * 0.325;
+    if (taxableIncome <= 180000) return 29467 + (taxableIncome - 120000) * 0.37;
+    return 51667 + (taxableIncome - 180000) * 0.45;
+  }
+
   if (residency === 'foreign_resident') {
     if (taxableIncome <= 135000) return taxableIncome * 0.30;
     if (taxableIncome <= 190000) return 40500 + (taxableIncome - 135000) * 0.37;
@@ -127,7 +194,7 @@ export function getAnnualTax(
     return 54100 + (taxableIncome - 190000) * 0.45;
   }
 
-  const lowRate = taxYear === '2026-27' ? 0.15 : 0.16;
+  const lowRate = taxYear === '2027-28' ? 0.14 : taxYear === '2026-27' ? 0.15 : 0.16;
 
   if (!hasTft) {
     const base45k = 45000 * lowRate;
@@ -178,6 +245,14 @@ export function calculatePeriodPAYG(
   const applyLito = input.applyLito && hasTft;
   const applyMedicare = input.applyMedicare && input.residency.startsWith('resident');
 
+  // Stage 2 (2020-21 to 2023-24): compute PAYG from Stage 2 annual tax + 2% Medicare levy (no LITO/MLS in weekly PAYG)
+  if (isStage2TaxYear(input.taxYear)) {
+    const rawTax = getAnnualTax(annualTaxable, input.taxYear, input.residency, hasTft);
+    const medicareLevy = applyMedicare ? annualTaxable * 0.02 : 0;
+    const hecsRepayment = input.hasHecs ? calculateHECS(annualTaxable) : 0;
+    return Math.round((rawTax + medicareLevy + hecsRepayment) / periods);
+  }
+
   // ATO Schedule 1 Statement of Formulas (Scale 2: resident with TFT + Medicare levy, no MLS)
   if (hasTft && applyMedicare) {
     let weeklyEarnings = periodTaxableIncome;
@@ -190,8 +265,9 @@ export function calculatePeriodPAYG(
     }
 
     const x = Math.floor(weeklyEarnings) + 0.99;
+    const is2027_28 = input.taxYear === '2027-28';
     const is2026_27 = input.taxYear === '2026-27';
-    const bOffset = is2026_27 ? 5.1538 : 0;
+    const bOffset = is2027_28 ? 10.3077 : is2026_27 ? 5.1538 : 0;
     let a = 0;
     let b = 0;
 
@@ -199,8 +275,8 @@ export function calculatePeriodPAYG(
       a = 0;
       b = 0;
     } else if (x < 500) {
-      a = is2026_27 ? 0.15 : 0.16;
-      b = is2026_27 ? 54.2308 : 57.8462;
+      a = is2027_28 ? 0.14 : is2026_27 ? 0.15 : 0.16;
+      b = is2027_28 ? 50.6154 : is2026_27 ? 54.2308 : 57.8462;
     } else if (x < 625) {
       a = 0.26;
       b = 107.8462;
@@ -208,8 +284,8 @@ export function calculatePeriodPAYG(
       a = 0.18;
       b = 57.8462;
     } else if (x < 865) {
-      a = is2026_27 ? 0.17 : 0.189;
-      b = is2026_27 ? 57.8462 : 64.3365;
+      a = is2027_28 ? 0.16 : is2026_27 ? 0.17 : 0.189;
+      b = is2027_28 ? 57.8462 : is2026_27 ? 57.8462 : 64.3365;
     } else if (x < 1282) {
       a = 0.3227;
       b = 180.0385 + bOffset;

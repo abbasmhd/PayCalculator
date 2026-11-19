@@ -76,9 +76,15 @@
           </td>
         </tr>
         <tr>
-          <td class="py-2.5 px-4 font-medium">Reserved Leave &amp; Admin Fees</td>
-          <td class="py-2.5 px-4 text-right text-rose-600">-{formatAUD(leaveReserve + result.adminFee)}</td>
-          <td class="py-2.5 px-4 text-right text-rose-600 bg-emerald-50/20">-{formatAUD(leaveReserve + result.adminFee)}</td>
+          <td class="py-2.5 px-4 font-medium">Reserved Leave</td>
+          <td class="py-2.5 px-4 text-right text-rose-600">-{formatAUD(leaveReserve)}</td>
+          <td class="py-2.5 px-4 text-right text-rose-600 bg-emerald-50/20">-{formatAUD(leaveReserve)}</td>
+          <td class="py-2.5 px-4 text-right text-zinc-400">$0.00</td>
+        </tr>
+        <tr>
+          <td class="py-2.5 px-4 font-medium">Admin Fee</td>
+          <td class="py-2.5 px-4 text-right text-rose-600">-{formatAUD(result.adminFee)}</td>
+          <td class="py-2.5 px-4 text-right text-rose-600 bg-emerald-50/20">-{formatAUD(result.adminFee)}</td>
           <td class="py-2.5 px-4 text-right text-zinc-400">$0.00</td>
         </tr>
         <tr class="bg-amber-50/40">
