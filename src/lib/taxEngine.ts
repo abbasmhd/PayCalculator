@@ -38,6 +38,10 @@ export interface PayrollInput {
   applyMedicare: boolean;
   hasPrivateHealth: boolean;
   expenseItems: ExpenseItem[];
+  carLeaseEnabled?: boolean;
+  carLeaseType?: 'ev' | 'ice';
+  carLeasePerPeriod?: number;
+  carBaseValue?: number;
 }
 
 export interface PayrollResult {
@@ -62,6 +66,9 @@ export interface PayrollResult {
   annualTaxable: number;
   effectiveTaxRate: number;
   savingsPct: number;
+  carLeasePreTax: number;
+  carLeasePostTax: number;
+  carLeaseGstSaved: number;
 }
 
 export const PERIODS_PER_YEAR: Record<PayCycle, number> = {
@@ -361,7 +368,27 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
   }
   const totalGstRefunded = totalIncGstPaid - totalExGstClaimed;
 
-  const clmTaxable = Math.max(0, stdTaxable - totalExGstClaimed);
+  const periods = PERIODS_PER_YEAR[input.payCycle] || 52;
+  const carLeasePerPeriod = Math.max(0, input.carLeasePerPeriod || 0);
+  let carLeasePreTax = 0;
+  let carLeasePostTax = 0;
+  let carLeaseGstSaved = 0;
+
+  if (input.carLeaseEnabled && carLeasePerPeriod > 0) {
+    const leaseType = input.carLeaseType ?? 'ev';
+    if (leaseType === 'ev') {
+      carLeasePostTax = 0;
+      carLeasePreTax = carLeasePerPeriod / 1.1;
+      carLeaseGstSaved = carLeasePerPeriod - carLeasePreTax;
+    } else {
+      carLeasePostTax = Math.min(carLeasePerPeriod, (Math.max(0, input.carBaseValue || 0) * 0.20) / periods);
+      const remaining = Math.max(0, carLeasePerPeriod - carLeasePostTax);
+      carLeasePreTax = remaining / 1.1;
+      carLeaseGstSaved = remaining - carLeasePreTax;
+    }
+  }
+
+  const clmTaxable = Math.max(0, stdTaxable - totalExGstClaimed - carLeasePreTax);
 
   let clmPAYGTax = 0;
   if (input.paygMode === 'ato_post_deductions') {
@@ -374,13 +401,12 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
     clmPAYGTax = Math.min(clmTaxable, Math.max(0, rawCustomTax));
   }
 
-  const clmNetPay = clmTaxable - clmPAYGTax + totalIncGstPaid;
+  const clmNetPay = clmTaxable - clmPAYGTax + totalIncGstPaid - carLeasePostTax;
   const paygTaxSaved = stdPAYGTax - clmPAYGTax;
-  const totalBenefitGotBack = paygTaxSaved + totalGstRefunded;
+  const totalBenefitGotBack = paygTaxSaved + totalGstRefunded + carLeaseGstSaved;
   const netOutofPocketCost = Math.max(0, totalIncGstPaid - totalBenefitGotBack);
   const netPayDifference = clmNetPay - stdNetPay;
 
-  const periods = PERIODS_PER_YEAR[input.payCycle] || 52;
   const annualNetPay = clmNetPay * periods;
   const annualTaxable = clmTaxable * periods;
 
@@ -408,7 +434,10 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
     annualNetPay,
     annualTaxable,
     effectiveTaxRate,
-    savingsPct
+    savingsPct,
+    carLeasePreTax,
+    carLeasePostTax,
+    carLeaseGstSaved
   };
 }
 

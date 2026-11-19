@@ -19,6 +19,7 @@
   import EarningsPanel from './components/EarningsPanel.svelte';
   import TaxParamsPanel from './components/TaxParamsPanel.svelte';
   import ExpensesPanel from './components/ExpensesPanel.svelte';
+  import CarLeasePanel from './components/CarLeasePanel.svelte';
   import MultiPeriodTable from './components/MultiPeriodTable.svelte';
   import ComparisonTable from './components/ComparisonTable.svelte';
   import Visualizations from './components/Visualizations.svelte';
@@ -70,6 +71,10 @@
     Array.isArray(saved.expenseItems) ? (saved.expenseItems as ExpenseItem[]) : []
   );
   let nextExpenseId = Math.max(0, ...expenseItems.map((i) => i.id)) + 1;
+  let carLeaseEnabled = $state<boolean>((saved.carLeaseEnabled as boolean) ?? false);
+  let carLeaseType = $state<'ev' | 'ice'>((saved.carLeaseType as 'ev' | 'ice') ?? 'ev');
+  let carLeasePerPeriod = $state<number>((saved.carLeasePerPeriod as number) ?? 0);
+  let carBaseValue = $state<number>((saved.carBaseValue as number) ?? 0);
 
   $effect(() => {
     try {
@@ -96,7 +101,11 @@
           applyLito,
           applyMedicare,
           hasPrivateHealth,
-          expenseItems
+          expenseItems,
+          carLeaseEnabled,
+          carLeaseType,
+          carLeasePerPeriod,
+          carBaseValue
         })
       );
     } catch {
@@ -125,7 +134,11 @@
       applyLito,
       applyMedicare,
       hasPrivateHealth,
-      expenseItems
+      expenseItems,
+      carLeaseEnabled,
+      carLeaseType,
+      carLeasePerPeriod,
+      carBaseValue
     })
   );
 
@@ -177,11 +190,31 @@
       { name: 'Reserved Leave', ...scale((p) => -leave * p), color: 'text-rose-600', rowClass: '' },
       { name: 'Admin Fee', ...scale((p) => -admin * p), color: 'text-rose-600', rowClass: '' },
       { name: 'Pre-Tax Expenses (Ex-GST)', ...scale((p) => -exGst * p), color: 'text-amber-700 font-semibold', rowClass: '' },
+      ...(carLeaseEnabled || result.carLeasePreTax > 0
+        ? [
+            {
+              name: 'Novated Lease (Pre-Tax)',
+              ...scale((p) => -result.carLeasePreTax * p),
+              color: 'text-amber-700 font-semibold',
+              rowClass: ''
+            }
+          ]
+        : []),
       section('Tax & Net'),
       { name: 'Taxable Income', ...scale((p) => taxable * p), color: '', rowClass: 'font-bold bg-zinc-50 text-zinc-900' },
       { name: 'PAYG Tax Withheld', ...scale((p) => -periodTax * p), color: 'text-rose-600', rowClass: '' },
       section('Tax-Free Reimbursements'),
       { name: 'Expense Reimbursements', ...scale((p) => incGst * p), color: 'text-[#0F4C3A] font-semibold', rowClass: '' },
+      ...(carLeaseEnabled || result.carLeasePostTax > 0
+        ? [
+            {
+              name: 'Novated Lease (Post-Tax ECM)',
+              ...scale((p) => -result.carLeasePostTax * p),
+              color: 'text-rose-600',
+              rowClass: ''
+            }
+          ]
+        : []),
       {
         name: 'Net Take-Home Pay',
         ...scale((p) => netPay * p),
@@ -234,6 +267,10 @@
     hasPrivateHealth: boolean;
     expenseItems: ExpenseItem[];
     nextExpenseId: number;
+    carLeaseEnabled: boolean;
+    carLeaseType: 'ev' | 'ice';
+    carLeasePerPeriod: number;
+    carBaseValue: number;
   }
 
   let previousState = $state<SavedState | null>(null);
@@ -262,7 +299,11 @@
       applyMedicare,
       hasPrivateHealth,
       expenseItems: expenseItems.map((item) => ({ ...item })),
-      nextExpenseId
+      nextExpenseId,
+      carLeaseEnabled,
+      carLeaseType,
+      carLeasePerPeriod,
+      carBaseValue
     };
 
     payCycle = 'weekly';
@@ -286,6 +327,10 @@
     hasPrivateHealth = false;
     expenseItems = [];
     nextExpenseId = 1;
+    carLeaseEnabled = false;
+    carLeaseType = 'ev';
+    carLeasePerPeriod = 0;
+    carBaseValue = 0;
 
     showUndoToast = true;
     if (undoTimer) clearTimeout(undoTimer);
@@ -317,6 +362,10 @@
     hasPrivateHealth = previousState.hasPrivateHealth;
     expenseItems = previousState.expenseItems;
     nextExpenseId = previousState.nextExpenseId;
+    carLeaseEnabled = previousState.carLeaseEnabled;
+    carLeaseType = previousState.carLeaseType;
+    carLeasePerPeriod = previousState.carLeasePerPeriod;
+    carBaseValue = previousState.carBaseValue;
     previousState = null;
     showUndoToast = false;
     if (undoTimer) clearTimeout(undoTimer);
@@ -366,12 +415,32 @@
         onAdd={addExpenseRow}
         onRemove={removeExpenseItem}
       />
+
+      <CarLeasePanel
+        bind:carLeaseEnabled
+        bind:carLeaseType
+        bind:carLeasePerPeriod
+        bind:carBaseValue
+        carLeasePreTax={result.carLeasePreTax}
+        carLeasePostTax={result.carLeasePostTax}
+        carLeaseGstSaved={result.carLeaseGstSaved}
+      />
     </div>
 
     <div class="lg:col-span-7 space-y-5">
       <MultiPeriodTable rows={multiPeriodRows} />
 
-      <ComparisonTable {result} {cycleLabel} {unitsWorked} {unitType} {unitRate} {leaveReserve} {leavePayout} {superMode} />
+      <ComparisonTable
+        {result}
+        {cycleLabel}
+        {unitsWorked}
+        {unitType}
+        {unitRate}
+        {leaveReserve}
+        {leavePayout}
+        {superMode}
+        {carLeaseEnabled}
+      />
 
       <Visualizations
         clmNetPay={result.clmNetPay}

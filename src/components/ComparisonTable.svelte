@@ -10,9 +10,10 @@
     leaveReserve: number;
     leavePayout?: number;
     superMode: SuperMode;
+    carLeaseEnabled?: boolean;
   }
 
-  let { result, cycleLabel, unitsWorked, unitType, unitRate, leaveReserve, leavePayout = 0, superMode }: Props = $props();
+  let { result, cycleLabel, unitsWorked, unitType, unitRate, leaveReserve, leavePayout = 0, superMode, carLeaseEnabled = false }: Props = $props();
 </script>
 
 <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden">
@@ -93,6 +94,14 @@
           <td class="py-2.5 px-4 text-right font-bold text-amber-800 bg-amber-50/60">-{formatAUD(result.totalExGstClaimed)}</td>
           <td class="py-2.5 px-4 text-right text-amber-800 font-semibold">-{formatAUD(result.totalExGstClaimed)}</td>
         </tr>
+        {#if carLeaseEnabled || result.carLeasePreTax > 0}
+          <tr class="bg-amber-50/40">
+            <td class="py-2.5 px-4 font-semibold text-amber-900">Novated Lease (Pre-Tax)</td>
+            <td class="py-2.5 px-4 text-right text-zinc-400">$0.00</td>
+            <td class="py-2.5 px-4 text-right font-bold text-amber-800 bg-amber-50/60">-{formatAUD(result.carLeasePreTax)}</td>
+            <td class="py-2.5 px-4 text-right text-amber-800 font-semibold">-{formatAUD(result.carLeasePreTax)}</td>
+          </tr>
+        {/if}
         <tr class="bg-zinc-50/80">
           <td colspan="4" class="py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
             Tax &amp; Net
@@ -121,6 +130,14 @@
           <td class="py-2.5 px-4 text-right font-bold text-[#0F4C3A] bg-emerald-50/60">+{formatAUD(result.totalIncGstPaid)}</td>
           <td class="py-2.5 px-4 text-right text-[#0F4C3A] font-bold">+{formatAUD(result.totalIncGstPaid)}</td>
         </tr>
+        {#if carLeaseEnabled || result.carLeasePostTax > 0}
+          <tr>
+            <td class="py-2.5 px-4 font-medium">Novated Lease (Post-Tax ECM)</td>
+            <td class="py-2.5 px-4 text-right text-zinc-400">$0.00</td>
+            <td class="py-2.5 px-4 text-right text-rose-600 bg-emerald-50/20">-{formatAUD(result.carLeasePostTax)}</td>
+            <td class="py-2.5 px-4 text-right text-rose-600">-{formatAUD(result.carLeasePostTax)}</td>
+          </tr>
+        {/if}
         <tr class="font-extrabold text-sm bg-zinc-900 text-white">
           <td class="py-3 px-4">Net Take-Home Pay</td>
           <td class="py-3 px-4 text-right text-zinc-300">{formatAUD(result.stdNetPay)}</td>

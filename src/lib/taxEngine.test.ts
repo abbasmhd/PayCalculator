@@ -347,3 +347,64 @@ describe('Stage 2 (2020-21 to 2023-24) and 2024-25 Tax Scales', () => {
     ).toBe(expectedWeeklyPayg);
   });
 });
+
+describe('Novated Car Lease', () => {
+  const baseInput = {
+    payCycle: 'weekly' as const,
+    unitType: 'hourly' as const,
+    unitsWorked: 38,
+    unitRate: 60,
+    superMode: 'exclusive' as const,
+    superRate: 12,
+    leaveReserve: 0,
+    adminFeeMode: 'dollar' as const,
+    adminFeeInput: 0,
+    paygMode: 'ato_post_deductions' as const,
+    customTaxMode: 'dollar' as const,
+    customPaygVal: 0,
+    taxYear: '2026-27' as const,
+    residency: 'resident_tft' as const,
+    hasHecs: false,
+    applyLito: true,
+    applyMedicare: true,
+    hasPrivateHealth: false,
+    expenseItems: []
+  };
+
+  it('calculates EV (FBT-exempt) novated lease with 100% pre-tax ex-GST deduction and GST saved', () => {
+    const result = calculatePayroll({
+      ...baseInput,
+      carLeaseEnabled: true,
+      carLeaseType: 'ev',
+      carLeasePerPeriod: 330
+    });
+
+    expect(result.carLeasePostTax).toBe(0);
+    expect(result.carLeasePreTax).toBeCloseTo(300, 2);
+    expect(result.carLeaseGstSaved).toBeCloseTo(30, 2);
+    expect(result.clmTaxable).toBeCloseTo(result.stdTaxable - 300, 2);
+    expect(result.clmNetPay).toBeCloseTo(result.clmTaxable - result.clmPAYGTax, 2);
+    expect(result.totalBenefitGotBack).toBeCloseTo(result.paygTaxSaved + 30, 2);
+  });
+
+  it('calculates Petrol / Hybrid (ECM 20%) novated lease with post-tax ECM and pre-tax remainder', () => {
+    const result = calculatePayroll({
+      ...baseInput,
+      carLeaseEnabled: true,
+      carLeaseType: 'ice',
+      carLeasePerPeriod: 440,
+      carBaseValue: 52000 // 20% = 10,400/yr => 200/wk post-tax
+    });
+
+    const expectedPostTax = (52000 * 0.2) / 52; // 200
+    const expectedPreTax = (440 - expectedPostTax) / 1.1; // 240 / 1.1
+    const expectedGstSaved = 440 - expectedPostTax - expectedPreTax;
+
+    expect(result.carLeasePostTax).toBeCloseTo(expectedPostTax, 2);
+    expect(result.carLeasePreTax).toBeCloseTo(expectedPreTax, 2);
+    expect(result.carLeaseGstSaved).toBeCloseTo(expectedGstSaved, 2);
+    expect(result.clmTaxable).toBeCloseTo(result.stdTaxable - expectedPreTax, 2);
+    expect(result.clmNetPay).toBeCloseTo(result.clmTaxable - result.clmPAYGTax - expectedPostTax, 2);
+    expect(result.totalBenefitGotBack).toBeCloseTo(result.paygTaxSaved + expectedGstSaved, 2);
+  });
+});
