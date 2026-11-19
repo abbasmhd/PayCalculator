@@ -9,6 +9,7 @@
     a: number;
     color: string;
     rowClass: string;
+    isSection?: boolean;
   }
 
   interface Props {
@@ -42,13 +43,21 @@
       </thead>
       <tbody class="divide-y divide-zinc-100 text-zinc-700">
         {#each rows as row}
-          <tr class={row.rowClass}>
-            <td class="py-2.5 px-4 font-medium">{row.name}</td>
-            <td class="py-2.5 px-3 text-right {row.color}">{formatAUD(row.w)}</td>
-            <td class="py-2.5 px-3 text-right {row.color}">{formatAUD(row.f)}</td>
-            <td class="py-2.5 px-3 text-right {row.color}">{formatAUD(row.m)}</td>
-            <td class="py-2.5 px-4 text-right font-bold {row.color} bg-zinc-100/60">{formatAUD(row.a)}</td>
-          </tr>
+          {#if row.isSection}
+            <tr class="bg-zinc-50/80">
+              <td colspan="5" class="py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                {row.name}
+              </td>
+            </tr>
+          {:else}
+            <tr class={row.rowClass}>
+              <td class="py-2.5 px-4 font-medium">{row.name}</td>
+              <td class="py-2.5 px-3 text-right {row.color}">{formatAUD(row.w)}</td>
+              <td class="py-2.5 px-3 text-right {row.color}">{formatAUD(row.f)}</td>
+              <td class="py-2.5 px-3 text-right {row.color}">{formatAUD(row.m)}</td>
+              <td class="py-2.5 px-4 text-right font-bold {row.color} bg-zinc-100/60">{formatAUD(row.a)}</td>
+            </tr>
+          {/if}
         {/each}
       </tbody>
     </table>

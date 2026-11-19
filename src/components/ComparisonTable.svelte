@@ -8,10 +8,11 @@
     unitType: UnitType;
     unitRate: number;
     leaveReserve: number;
+    leavePayout?: number;
     superMode: SuperMode;
   }
 
-  let { result, cycleLabel, unitsWorked, unitType, unitRate, leaveReserve, superMode }: Props = $props();
+  let { result, cycleLabel, unitsWorked, unitType, unitRate, leaveReserve, leavePayout = 0, superMode }: Props = $props();
 </script>
 
 <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden">
@@ -36,6 +37,11 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-zinc-100 text-zinc-700">
+        <tr class="bg-zinc-50/80">
+          <td colspan="4" class="py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            Gross &amp; Package
+          </td>
+        </tr>
         <tr>
           <td class="py-2.5 px-4 font-medium">
             Base Gross ({(unitsWorked || 0).toFixed(1)} {unitType === 'hourly' ? 'hrs' : 'days'} @ ${(unitRate || 0).toFixed(2)})
@@ -56,6 +62,19 @@
           </td>
           <td class="py-2.5 px-4 text-right text-zinc-400">$0.00</td>
         </tr>
+        {#if leavePayout > 0}
+          <tr>
+            <td class="py-2.5 px-4 font-medium">Leave Payout (Taxable)</td>
+            <td class="py-2.5 px-4 text-right text-[#0F4C3A]">+{formatAUD(leavePayout)}</td>
+            <td class="py-2.5 px-4 text-right text-[#0F4C3A] bg-emerald-50/20">+{formatAUD(leavePayout)}</td>
+            <td class="py-2.5 px-4 text-right text-zinc-400">$0.00</td>
+          </tr>
+        {/if}
+        <tr class="bg-zinc-50/80">
+          <td colspan="4" class="py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            Pre-Tax Deductions
+          </td>
+        </tr>
         <tr>
           <td class="py-2.5 px-4 font-medium">Reserved Leave &amp; Admin Fees</td>
           <td class="py-2.5 px-4 text-right text-rose-600">-{formatAUD(leaveReserve + result.adminFee)}</td>
@@ -68,6 +87,11 @@
           <td class="py-2.5 px-4 text-right font-bold text-amber-800 bg-amber-50/60">-{formatAUD(result.totalExGstClaimed)}</td>
           <td class="py-2.5 px-4 text-right text-amber-800 font-semibold">-{formatAUD(result.totalExGstClaimed)}</td>
         </tr>
+        <tr class="bg-zinc-50/80">
+          <td colspan="4" class="py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            Tax &amp; Net
+          </td>
+        </tr>
         <tr class="font-bold bg-zinc-50 text-zinc-900">
           <td class="py-2.5 px-4">Taxable Period Income</td>
           <td class="py-2.5 px-4 text-right">{formatAUD(result.stdTaxable)}</td>
@@ -79,6 +103,11 @@
           <td class="py-2.5 px-4 text-right text-rose-600">-{formatAUD(result.stdPAYGTax)}</td>
           <td class="py-2.5 px-4 text-right text-rose-600 bg-emerald-50/20">-{formatAUD(result.clmPAYGTax)}</td>
           <td class="py-2.5 px-4 text-right text-[#0F4C3A] font-bold">+{formatAUD(result.paygTaxSaved)}</td>
+        </tr>
+        <tr class="bg-zinc-50/80">
+          <td colspan="4" class="py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            Tax-Free Reimbursements
+          </td>
         </tr>
         <tr class="bg-emerald-50/40">
           <td class="py-2.5 px-4 font-semibold text-[#0F4C3A]">Expense Reimbursements (Inc-GST)</td>

@@ -21,6 +21,7 @@ export interface PayrollInput {
   superMode: SuperMode;
   superRate: number;
   leaveReserve: number;
+  leavePayout?: number;
   adminFeeMode: AdminFeeMode;
   adminFeeInput: number;
   paygMode: PaygMode;
@@ -107,7 +108,7 @@ export function getTaxBrackets(residency: ResidencyStatus): TaxBracket[] {
 
 export function getAnnualTax(
   taxableIncome: number,
-  _taxYear: TaxYear,
+  taxYear: TaxYear,
   residency: ResidencyStatus,
   hasTft: boolean
 ): number {
@@ -126,19 +127,23 @@ export function getAnnualTax(
     return 54100 + (taxableIncome - 190000) * 0.45;
   }
 
+  const lowRate = taxYear === '2026-27' ? 0.15 : 0.16;
+
   if (!hasTft) {
-    if (taxableIncome <= 45000) return taxableIncome * 0.16;
-    if (taxableIncome <= 135000) return 7200 + (taxableIncome - 45000) * 0.30;
-    if (taxableIncome <= 190000) return 34200 + (taxableIncome - 135000) * 0.37;
-    return 54550 + (taxableIncome - 190000) * 0.45;
+    const base45k = 45000 * lowRate;
+    if (taxableIncome <= 45000) return taxableIncome * lowRate;
+    if (taxableIncome <= 135000) return base45k + (taxableIncome - 45000) * 0.30;
+    if (taxableIncome <= 190000) return base45k + 27000 + (taxableIncome - 135000) * 0.37;
+    return base45k + 27000 + 20350 + (taxableIncome - 190000) * 0.45;
   }
 
   // Standard Australian Resident with Tax-Free Threshold (Stage 3)
   if (taxableIncome <= 18200) return 0;
-  if (taxableIncome <= 45000) return (taxableIncome - 18200) * 0.16;
-  if (taxableIncome <= 135000) return 4288 + (taxableIncome - 45000) * 0.30;
-  if (taxableIncome <= 190000) return 31288 + (taxableIncome - 135000) * 0.37;
-  return 51638 + (taxableIncome - 190000) * 0.45;
+  const base45k = (45000 - 18200) * lowRate;
+  if (taxableIncome <= 45000) return (taxableIncome - 18200) * lowRate;
+  if (taxableIncome <= 135000) return base45k + (taxableIncome - 45000) * 0.30;
+  if (taxableIncome <= 190000) return base45k + 27000 + (taxableIncome - 135000) * 0.37;
+  return base45k + 27000 + 20350 + (taxableIncome - 190000) * 0.45;
 }
 
 export function calculateLITO(taxableIncome: number): number {
@@ -185,6 +190,8 @@ export function calculatePeriodPAYG(
     }
 
     const x = Math.floor(weeklyEarnings) + 0.99;
+    const is2026_27 = input.taxYear === '2026-27';
+    const bOffset = is2026_27 ? 5.1538 : 0;
     let a = 0;
     let b = 0;
 
@@ -192,8 +199,8 @@ export function calculatePeriodPAYG(
       a = 0;
       b = 0;
     } else if (x < 500) {
-      a = 0.16;
-      b = 57.8462;
+      a = is2026_27 ? 0.15 : 0.16;
+      b = is2026_27 ? 54.2308 : 57.8462;
     } else if (x < 625) {
       a = 0.26;
       b = 107.8462;
@@ -201,20 +208,20 @@ export function calculatePeriodPAYG(
       a = 0.18;
       b = 57.8462;
     } else if (x < 865) {
-      a = 0.189;
-      b = 64.3365;
+      a = is2026_27 ? 0.17 : 0.189;
+      b = is2026_27 ? 57.8462 : 64.3365;
     } else if (x < 1282) {
       a = 0.3227;
-      b = 180.0385;
+      b = 180.0385 + bOffset;
     } else if (x < 2596) {
       a = 0.32;
-      b = 176.5769;
+      b = 176.5769 + bOffset;
     } else if (x < 3653) {
       a = 0.39;
-      b = 358.3077;
+      b = 358.3077 + bOffset;
     } else {
       a = 0.47;
-      b = 650.6154;
+      b = 650.6154 + bOffset;
     }
 
     const weeklyTax = Math.max(0, Math.round(a * x - b));
@@ -248,6 +255,7 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
   const rate = Math.max(0, input.unitRate || 0);
   const superPct = Math.max(0, input.superRate || 0);
   const leaveReserve = input.leaveReserve || 0;
+  const leavePayout = Math.max(0, input.leavePayout || 0);
   const adminInput = Math.max(0, input.adminFeeInput || 0);
 
   const baseGross = units * rate;
@@ -264,7 +272,7 @@ export function calculatePayroll(input: PayrollInput): PayrollResult {
 
   const adminFee = input.adminFeeMode === 'percent' ? baseGross * (adminInput / 100) : adminInput;
 
-  const stdTaxable = Math.max(0, totalGrossTaxablePay - leaveReserve - adminFee);
+  const stdTaxable = Math.max(0, totalGrossTaxablePay - leaveReserve + leavePayout - adminFee);
   const stdPAYGTax = calculatePeriodPAYG(stdTaxable, input);
   const stdNetPay = stdTaxable - stdPAYGTax;
 

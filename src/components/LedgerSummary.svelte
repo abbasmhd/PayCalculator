@@ -19,7 +19,7 @@
           <span class="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums">{formatAUD(result.clmNetPay)}</span>
         </div>
       </div>
-      <p class="text-xs font-semibold text-emerald-200 mt-3 tabular-nums">{formatSignedAUD(result.netPayDifference)} vs std</p>
+      <p class="text-xs font-semibold text-emerald-200 mt-3 tabular-nums">{formatSignedAUD(result.netPayDifference)} vs. standard pay</p>
     </div>
 
     <div class="md:col-span-8 grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-zinc-200">
@@ -46,7 +46,11 @@
       <div class="p-5 flex flex-col justify-between">
         <p class="text-xs font-medium text-zinc-500">Net expense cost</p>
         <span class="text-xl font-bold text-zinc-900 mt-1.5 tabular-nums">{formatAUD(result.netOutofPocketCost)}</span>
-        <p class="text-[11px] text-[#0F4C3A] font-semibold mt-2 tabular-nums">Save {result.savingsPct.toFixed(1)}% on claims</p>
+        {#if result.totalIncGstPaid === 0}
+          <p class="text-[11px] text-zinc-500 font-medium mt-2">Add a claim to see savings</p>
+        {:else}
+          <p class="text-[11px] text-[#0F4C3A] font-semibold mt-2 tabular-nums">Save {result.savingsPct.toFixed(1)}% on claims</p>
+        {/if}
       </div>
     </div>
   </div>

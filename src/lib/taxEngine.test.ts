@@ -37,19 +37,43 @@ const defaultInput: PayrollInput = {
 describe('ATO Stage 3 Tax Brackets', () => {
   it('returns 0 below tax-free threshold ($18,200)', () => {
     expect(getAnnualTax(18200, '2026-27', 'resident_tft', true)).toBe(0);
+    expect(getAnnualTax(18200, '2025-26', 'resident_tft', true)).toBe(0);
   });
 
-  it('calculates 16% bracket ($18,201 - $45,000)', () => {
-    expect(getAnnualTax(45000, '2026-27', 'resident_tft', true)).toBeCloseTo(4288, 2);
+  it('calculates 15% bracket for 2026-27 and 16% bracket for 2025-26 ($18,201 - $45,000)', () => {
+    expect(getAnnualTax(45000, '2026-27', 'resident_tft', true)).toBeCloseTo(4020, 2);
+    expect(getAnnualTax(45000, '2025-26', 'resident_tft', true)).toBeCloseTo(4288, 2);
   });
 
   it('calculates 30% bracket ($45,001 - $135,000)', () => {
-    expect(getAnnualTax(100000, '2026-27', 'resident_tft', true)).toBeCloseTo(20788, 2);
+    expect(getAnnualTax(100000, '2026-27', 'resident_tft', true)).toBeCloseTo(20520, 2);
+    expect(getAnnualTax(100000, '2025-26', 'resident_tft', true)).toBeCloseTo(20788, 2);
   });
 
   it('calculates 37% and 45% brackets', () => {
-    expect(getAnnualTax(190000, '2026-27', 'resident_tft', true)).toBeCloseTo(51638, 2);
-    expect(getAnnualTax(200000, '2026-27', 'resident_tft', true)).toBeCloseTo(56138, 2);
+    expect(getAnnualTax(190000, '2026-27', 'resident_tft', true)).toBeCloseTo(51370, 2);
+    expect(getAnnualTax(200000, '2026-27', 'resident_tft', true)).toBeCloseTo(55870, 2);
+    expect(getAnnualTax(190000, '2025-26', 'resident_tft', true)).toBeCloseTo(51638, 2);
+    expect(getAnnualTax(200000, '2025-26', 'resident_tft', true)).toBeCloseTo(56138, 2);
+  });
+
+  it('matches ATO Scale 2 PAYG withholding for 2025-26 and 2026-27', () => {
+    const base = {
+      payCycle: 'weekly' as const,
+      residency: 'resident_tft' as const,
+      applyLito: true,
+      applyMedicare: true,
+      hasHecs: false,
+      hasPrivateHealth: false
+    };
+
+    expect(calculatePeriodPAYG(2863.13, { ...base, taxYear: '2025-26' })).toBe(759);
+    expect(calculatePeriodPAYG(1455.36, { ...base, taxYear: '2025-26' })).toBe(289);
+    expect(calculatePeriodPAYG(10990.51, { ...base, taxYear: '2025-26' })).toBe(4515);
+
+    expect(calculatePeriodPAYG(2863.13, { ...base, taxYear: '2026-27' })).toBe(753);
+    expect(calculatePeriodPAYG(1455.36, { ...base, taxYear: '2026-27' })).toBe(284);
+    expect(calculatePeriodPAYG(10990.51, { ...base, taxYear: '2026-27' })).toBe(4510);
   });
 });
 
@@ -127,7 +151,8 @@ describe('Residency, HECS, MLS, and Brackets', () => {
   it('calculates foreign_resident, whm, and resident_no_tft annual tax', () => {
     expect(getAnnualTax(100000, '2026-27', 'foreign_resident', false)).toBeCloseTo(30000, 2);
     expect(getAnnualTax(45000, '2026-27', 'whm', false)).toBeCloseTo(6750, 2);
-    expect(getAnnualTax(45000, '2026-27', 'resident_no_tft', false)).toBeCloseTo(7200, 2);
+    expect(getAnnualTax(45000, '2026-27', 'resident_no_tft', false)).toBeCloseTo(6750, 2);
+    expect(getAnnualTax(45000, '2025-26', 'resident_no_tft', false)).toBeCloseTo(7200, 2);
   });
 
   it('gates LITO and Medicare for foreign_resident and whm', () => {
@@ -183,15 +208,15 @@ describe('ATO Schedule 1 Statement of Formulas (Scale 2)', () => {
   it('calculates weekly PAYG for $2,863.13/wk -> $759.00 PAYG', () => {
     const res = calculatePayroll({ ...defaultInput, expenseItems: [] });
     expect(res.stdTaxable).toBeCloseTo(2863.13, 2);
-    expect(res.stdPAYGTax).toBe(759);
-    expect(res.stdNetPay).toBeCloseTo(2104.13, 2);
+    expect(res.stdPAYGTax).toBe(753);
+    expect(res.stdNetPay).toBeCloseTo(2110.13, 2);
   });
 
-  it('calculates weekly PAYG with expenses: $1,455.36/wk -> $289.00 PAYG', () => {
+  it('calculates weekly PAYG with expenses: $1,455.36/wk -> $284.00 PAYG', () => {
     const res = calculatePayroll(defaultInput);
     expect(res.clmTaxable).toBeCloseTo(1455.36, 2);
-    expect(res.clmPAYGTax).toBe(289);
-    expect(res.clmNetPay).toBeCloseTo(2714.91, 2);
+    expect(res.clmPAYGTax).toBe(284);
+    expect(res.clmNetPay).toBeCloseTo(2719.91, 2);
   });
 
   it('calculates weekly PAYG for $10,990.51/wk -> $4,515.00 PAYG', () => {
@@ -204,8 +229,8 @@ describe('ATO Schedule 1 Statement of Formulas (Scale 2)', () => {
       hasHecs: false,
       hasPrivateHealth: false
     });
-    expect(payg).toBe(4515);
-    expect(10990.51 - payg).toBeCloseTo(6475.51, 2);
+    expect(payg).toBe(4510);
+    expect(10990.51 - payg).toBeCloseTo(6480.51, 2);
   });
 
   it('scales properly for fortnightly, monthly, and annually', () => {
@@ -218,7 +243,7 @@ describe('ATO Schedule 1 Statement of Formulas (Scale 2)', () => {
       hasPrivateHealth: false
     };
     const weekly = calculatePeriodPAYG(2863.13, { ...baseOpts, payCycle: 'weekly' });
-    expect(weekly).toBe(759);
+    expect(weekly).toBe(753);
     expect(calculatePeriodPAYG(2863.13 * 2, { ...baseOpts, payCycle: 'fortnightly' })).toBe(weekly * 2);
     expect(calculatePeriodPAYG((2863.13 * 13) / 3, { ...baseOpts, payCycle: 'monthly' })).toBe(
       Math.round((weekly * 13) / 3)
@@ -226,15 +251,16 @@ describe('ATO Schedule 1 Statement of Formulas (Scale 2)', () => {
     expect(calculatePeriodPAYG(2863.13 * 52, { ...baseOpts, payCycle: 'annually' })).toBe(weekly * 52);
   });
 
-  it('calculates Payslip 4 (W/E 11 OCT 26) with negative leaveReserve (-7500)', () => {
+  it('calculates Payslip 4 (W/E 11 OCT 26) with leavePayout (7500) and leaveReserve (0)', () => {
     const res = calculatePayroll({
       ...defaultInput,
       unitsWorked: 32,
-      hourlyRate: 124.61,
-      leaveReserve: -7500,
+      unitRate: 124.61,
+      leaveReserve: 0,
+      leavePayout: 7500,
       expenseItems: []
     });
     expect(res.clmTaxable).toBeCloseTo(10990.5, 1);
-    expect(res.clmPAYGTax).toBe(4515);
+    expect(res.clmPAYGTax).toBe(4510);
   });
 });

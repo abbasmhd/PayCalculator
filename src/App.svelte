@@ -30,6 +30,7 @@
   let superMode = $state<SuperMode>('inclusive');
   let superRate = $state<number>(12.0);
   let leaveReserve = $state<number>(1500.0);
+  let leavePayout = $state<number>(0);
   let adminFeeMode = $state<AdminFeeMode>('percent');
   let adminFeeInput = $state<number>(1.75);
   let paygMode = $state<PaygMode>('ato_post_deductions');
@@ -57,6 +58,7 @@
       superMode,
       superRate,
       leaveReserve,
+      leavePayout,
       adminFeeMode,
       adminFeeInput,
       paygMode,
@@ -87,10 +89,10 @@
     const netPay = result.clmNetPay;
 
     const scale = (fn: (p: number) => number) => ({
-      w: fn(52 / currentPeriods),
-      f: fn(26 / currentPeriods),
-      m: fn(12 / currentPeriods),
-      a: fn(1 / currentPeriods)
+      w: fn(currentPeriods / 52),
+      f: fn(currentPeriods / 26),
+      m: fn(currentPeriods / 12),
+      a: fn(currentPeriods)
     });
 
     const superRow =
@@ -98,14 +100,32 @@
         ? { name: 'Super Guarantee (+)', ...scale((p) => superVal * p), color: 'text-zinc-600', rowClass: '' }
         : { name: 'Super Guarantee', ...scale((p) => -superVal * p), color: 'text-rose-600', rowClass: '' };
 
+    const section = (name: string) => ({
+      name,
+      w: 0,
+      f: 0,
+      m: 0,
+      a: 0,
+      color: '',
+      rowClass: '',
+      isSection: true
+    });
+
     return [
+      section('Gross & Package'),
       { name: 'Base Gross Earnings', ...scale((p) => baseGross * p), color: '', rowClass: '' },
       superRow,
+      ...(leavePayout > 0
+        ? [{ name: 'Leave Payout (+)', ...scale((p) => leavePayout * p), color: 'text-[#0F4C3A]', rowClass: '' }]
+        : []),
+      section('Pre-Tax Deductions'),
       { name: 'Reserved Leave', ...scale((p) => -leave * p), color: 'text-rose-600', rowClass: '' },
       { name: 'Admin Fee', ...scale((p) => -admin * p), color: 'text-rose-600', rowClass: '' },
       { name: 'Pre-Tax Expenses (Ex-GST)', ...scale((p) => -exGst * p), color: 'text-amber-700 font-semibold', rowClass: '' },
+      section('Tax & Net'),
       { name: 'Taxable Income', ...scale((p) => taxable * p), color: '', rowClass: 'font-bold bg-zinc-50 text-zinc-900' },
       { name: 'PAYG Tax Withheld', ...scale((p) => -periodTax * p), color: 'text-rose-600', rowClass: '' },
+      section('Tax-Free Reimbursements'),
       { name: 'Expense Reimbursements', ...scale((p) => incGst * p), color: 'text-[#0F4C3A] font-semibold', rowClass: '' },
       {
         name: 'Net Take-Home Pay',
@@ -137,7 +157,59 @@
     expenseItems = expenseItems.filter((x) => x.id !== id);
   }
 
+  interface SavedState {
+    payCycle: PayCycle;
+    unitType: UnitType;
+    unitsWorked: number;
+    unitRate: number;
+    superMode: SuperMode;
+    superRate: number;
+    leaveReserve: number;
+    leavePayout: number;
+    adminFeeMode: AdminFeeMode;
+    adminFeeInput: number;
+    paygMode: PaygMode;
+    customTaxMode: CustomTaxMode;
+    customPaygVal: number;
+    taxYear: TaxYear;
+    residency: ResidencyStatus;
+    hasHecs: boolean;
+    applyLito: boolean;
+    applyMedicare: boolean;
+    hasPrivateHealth: boolean;
+    expenseItems: ExpenseItem[];
+    nextExpenseId: number;
+  }
+
+  let previousState = $state<SavedState | null>(null);
+  let showUndoToast = $state(false);
+  let undoTimer: ReturnType<typeof setTimeout> | undefined;
+
   function resetDefaults() {
+    previousState = {
+      payCycle,
+      unitType,
+      unitsWorked,
+      unitRate,
+      superMode,
+      superRate,
+      leaveReserve,
+      leavePayout,
+      adminFeeMode,
+      adminFeeInput,
+      paygMode,
+      customTaxMode,
+      customPaygVal,
+      taxYear,
+      residency,
+      hasHecs,
+      applyLito,
+      applyMedicare,
+      hasPrivateHealth,
+      expenseItems: expenseItems.map((item) => ({ ...item })),
+      nextExpenseId
+    };
+
     payCycle = 'weekly';
     unitType = 'hourly';
     unitsWorked = 40.0;
@@ -145,6 +217,7 @@
     superMode = 'inclusive';
     superRate = 12.0;
     leaveReserve = 1500.0;
+    leavePayout = 0;
     adminFeeMode = 'percent';
     adminFeeInput = 1.75;
     paygMode = 'ato_post_deductions';
@@ -161,6 +234,40 @@
       { id: 2, name: 'Business Expenses', amount: 176.55 }
     ];
     nextExpenseId = 3;
+
+    showUndoToast = true;
+    if (undoTimer) clearTimeout(undoTimer);
+    undoTimer = setTimeout(() => {
+      showUndoToast = false;
+    }, 8000);
+  }
+
+  function undoReset() {
+    if (!previousState) return;
+    payCycle = previousState.payCycle;
+    unitType = previousState.unitType;
+    unitsWorked = previousState.unitsWorked;
+    unitRate = previousState.unitRate;
+    superMode = previousState.superMode;
+    superRate = previousState.superRate;
+    leaveReserve = previousState.leaveReserve;
+    leavePayout = previousState.leavePayout;
+    adminFeeMode = previousState.adminFeeMode;
+    adminFeeInput = previousState.adminFeeInput;
+    paygMode = previousState.paygMode;
+    customTaxMode = previousState.customTaxMode;
+    customPaygVal = previousState.customPaygVal;
+    taxYear = previousState.taxYear;
+    residency = previousState.residency;
+    hasHecs = previousState.hasHecs;
+    applyLito = previousState.applyLito;
+    applyMedicare = previousState.applyMedicare;
+    hasPrivateHealth = previousState.hasPrivateHealth;
+    expenseItems = previousState.expenseItems;
+    nextExpenseId = previousState.nextExpenseId;
+    previousState = null;
+    showUndoToast = false;
+    if (undoTimer) clearTimeout(undoTimer);
   }
 </script>
 
@@ -180,6 +287,7 @@
         bind:superMode
         bind:superRate
         bind:leaveReserve
+        bind:leavePayout
         bind:adminFeeMode
         bind:adminFeeInput
         baseGross={result.baseGross}
@@ -211,7 +319,7 @@
     <div class="lg:col-span-7 space-y-5">
       <MultiPeriodTable rows={multiPeriodRows} />
 
-      <ComparisonTable {result} {cycleLabel} {unitsWorked} {unitType} {unitRate} {leaveReserve} {superMode} />
+      <ComparisonTable {result} {cycleLabel} {unitsWorked} {unitType} {unitRate} {leaveReserve} {leavePayout} {superMode} />
 
       <Visualizations
         clmNetPay={result.clmNetPay}
@@ -227,3 +335,27 @@
     </div>
   </div>
 </main>
+
+{#if showUndoToast}
+  <div
+    role="status"
+    aria-live="polite"
+    class="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-zinc-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg border border-zinc-700"
+  >
+    <span>Defaults restored</span>
+    <span class="text-zinc-500">—</span>
+    <button
+      onclick={undoReset}
+      class="font-bold text-emerald-300 hover:text-emerald-200 underline cursor-pointer"
+    >
+      Undo
+    </button>
+    <button
+      onclick={() => (showUndoToast = false)}
+      aria-label="Dismiss notification"
+      class="text-zinc-400 hover:text-white ml-1 cursor-pointer"
+    >
+      ×
+    </button>
+  </div>
+{/if}

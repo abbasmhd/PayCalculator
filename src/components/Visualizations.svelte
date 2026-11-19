@@ -104,11 +104,32 @@
     <div class="relative flex justify-center items-center h-48">
       <canvas
         bind:this={donutCanvas}
-        role="img"
         aria-label="Gross package breakdown donut chart"
         class="max-h-full max-w-full"
       ></canvas>
     </div>
+    <ul class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-zinc-600 pt-1 border-t border-zinc-100" aria-label="Package breakdown summary">
+      <li class="flex items-center justify-between">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-xs bg-[#0F4C3A]"></span>Net Pay</span>
+        <span class="font-semibold text-zinc-900 tabular-nums">{formatAUD(Math.max(0, clmNetPay - totalIncGstPaid))}</span>
+      </li>
+      <li class="flex items-center justify-between">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-xs bg-[#E11D48]"></span>PAYG Tax</span>
+        <span class="font-semibold text-zinc-900 tabular-nums">{formatAUD(Math.max(0, clmPAYGTax))}</span>
+      </li>
+      <li class="flex items-center justify-between">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-xs bg-[#111827]"></span>Super</span>
+        <span class="font-semibold text-zinc-900 tabular-nums">{formatAUD(Math.max(0, superAmount))}</span>
+      </li>
+      <li class="flex items-center justify-between">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-xs bg-[#D97706]"></span>Fees/Leave</span>
+        <span class="font-semibold text-zinc-900 tabular-nums">{formatAUD(Math.max(0, feesAndLeave))}</span>
+      </li>
+      <li class="flex items-center justify-between col-span-2">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-xs bg-[#2563EB]"></span>Pre-Tax Exp</span>
+        <span class="font-semibold text-zinc-900 tabular-nums">{formatAUD(Math.max(0, totalExGstClaimed))}</span>
+      </li>
+    </ul>
   </div>
 
   <div class="bg-white rounded-lg border border-zinc-200 p-4 space-y-3">

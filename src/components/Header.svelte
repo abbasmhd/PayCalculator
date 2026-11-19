@@ -28,8 +28,8 @@
 
     <div class="flex items-center gap-2.5">
       <div class="flex items-center gap-1.5 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200">
-        <span class="text-xs text-zinc-500 font-medium">Tax year:</span>
-        <select bind:value={taxYear} class="bg-transparent text-zinc-900 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
+        <label for="select-tax-year" class="text-xs text-zinc-500 font-medium">Tax year:</label>
+        <select id="select-tax-year" bind:value={taxYear} class="bg-transparent text-zinc-900 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
           <option value="2026-27">2026–27 (Stage 3)</option>
           <option value="2025-26">2025–26 (Stage 3)</option>
         </select>

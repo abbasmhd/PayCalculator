@@ -15,6 +15,7 @@
     <div class="inline-flex p-0.5 bg-zinc-100 rounded-lg border border-zinc-200 text-xs gap-0.5">
       {#each (['weekly', 'fortnightly', 'monthly', 'annually'] as const) as cycle}
         <button
+          aria-pressed={payCycle === cycle}
           onclick={() => (payCycle = cycle)}
           class="px-3 py-1.5 rounded-md transition capitalize cursor-pointer {payCycle === cycle
             ? 'bg-[#0F4C3A] text-white font-semibold'
@@ -31,6 +32,7 @@
     <div class="inline-flex p-0.5 bg-zinc-100 rounded-lg border border-zinc-200 text-xs gap-0.5">
       {#each (['hourly', 'daily'] as const) as unit}
         <button
+          aria-pressed={unitType === unit}
           onclick={() => (unitType = unit)}
           class="px-2.5 py-1 rounded-md transition capitalize cursor-pointer {unitType === unit
             ? 'bg-[#0F4C3A] text-white font-semibold'

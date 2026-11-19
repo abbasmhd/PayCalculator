@@ -45,15 +45,17 @@
     {#if paygMode === 'custom_override'}
       <div class="pt-2 space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] text-zinc-600 font-semibold">Custom withholding amount:</span>
+          <label for="input-custom-payg" class="text-[11px] text-zinc-600 font-semibold">Custom withholding amount:</label>
           <div class="inline-flex p-0.5 bg-zinc-200 rounded text-[10px]">
             <button
+              aria-pressed={customTaxMode === 'dollar'}
               onclick={() => (customTaxMode = 'dollar')}
               class="px-1.5 py-0.5 rounded cursor-pointer {customTaxMode === 'dollar' ? 'bg-white text-zinc-900 font-bold' : 'text-zinc-600'}"
             >
               $ Fixed
             </button>
             <button
+              aria-pressed={customTaxMode === 'percent'}
               onclick={() => (customTaxMode = 'percent')}
               class="px-1.5 py-0.5 rounded cursor-pointer {customTaxMode === 'percent' ? 'bg-white text-zinc-900 font-bold' : 'text-zinc-600'}"
             >
@@ -62,6 +64,7 @@
           </div>
         </div>
         <input
+          id="input-custom-payg"
           type="number"
           min="0"
           bind:value={customPaygVal}

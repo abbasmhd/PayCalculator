@@ -8,6 +8,7 @@
     superMode: SuperMode;
     superRate: number;
     leaveReserve: number;
+    leavePayout: number;
     adminFeeMode: AdminFeeMode;
     adminFeeInput: number;
     baseGross: number;
@@ -22,6 +23,7 @@
     superMode = $bindable(),
     superRate = $bindable(),
     leaveReserve = $bindable(),
+    leavePayout = $bindable(),
     adminFeeMode = $bindable(),
     adminFeeInput = $bindable(),
     baseGross,
@@ -81,12 +83,14 @@
       <label for="input-super-rate" class="text-xs font-semibold text-zinc-700">Super guarantee</label>
       <div class="inline-flex p-0.5 bg-zinc-100 rounded-md text-[11px] border border-zinc-200">
         <button
+          aria-pressed={superMode === 'inclusive'}
           onclick={() => (superMode = 'inclusive')}
           class="px-2 py-0.5 rounded cursor-pointer {superMode === 'inclusive' ? 'font-bold bg-white text-[#0F4C3A] shadow-xs' : 'text-zinc-600 hover:text-zinc-900'}"
         >
           Inclusive
         </button>
         <button
+          aria-pressed={superMode === 'exclusive'}
           onclick={() => (superMode = 'exclusive')}
           class="px-2 py-0.5 rounded cursor-pointer {superMode === 'exclusive' ? 'font-bold bg-white text-[#0F4C3A] shadow-xs' : 'text-zinc-600 hover:text-zinc-900'}"
         >
@@ -112,19 +116,43 @@
 
   <!-- Contractor Deductions -->
   <div class="pt-3 border-t border-zinc-100 space-y-3">
-    <div class="flex items-center justify-between">
-      <label for="input-leave" class="text-xs font-semibold text-zinc-700">Reserved leave</label>
-      <button onclick={() => (leaveReserve = 0)} class="text-[11px] font-semibold text-[#0F4C3A] hover:underline cursor-pointer">Set to $0</button>
+    <div class="space-y-1">
+      <div class="flex items-center justify-between">
+        <label for="input-leave" class="text-xs font-semibold text-zinc-700">Reserved leave</label>
+        <button onclick={() => (leaveReserve = 0)} class="text-[11px] font-semibold text-[#0F4C3A] hover:underline cursor-pointer">Set to $0</button>
+      </div>
+      <p class="text-[11px] text-zinc-500">Set aside pre-tax into your leave pot</p>
+      <div class="relative">
+        <span class="absolute left-3 top-2 text-xs text-zinc-400 font-bold">$</span>
+        <input
+          id="input-leave"
+          type="number"
+          bind:value={leaveReserve}
+          step="10"
+          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+        />
+      </div>
     </div>
-    <div class="relative">
-      <span class="absolute left-3 top-2 text-xs text-zinc-400 font-bold">$</span>
-      <input
-        id="input-leave"
-        type="number"
-        bind:value={leaveReserve}
-        step="10"
-        class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
-      />
+
+    <div class="space-y-1">
+      <div class="flex items-center justify-between">
+        <label for="input-leave-payout" class="text-xs font-semibold text-zinc-700">Leave payout</label>
+        {#if leavePayout > 0}
+          <button onclick={() => (leavePayout = 0)} class="text-[11px] font-semibold text-[#0F4C3A] hover:underline cursor-pointer">Set to $0</button>
+        {/if}
+      </div>
+      <p class="text-[11px] text-zinc-500">Taxable leave cashed out this cycle</p>
+      <div class="relative">
+        <span class="absolute left-3 top-2 text-xs text-zinc-400 font-bold">$</span>
+        <input
+          id="input-leave-payout"
+          type="number"
+          bind:value={leavePayout}
+          min="0"
+          step="10"
+          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+        />
+      </div>
     </div>
 
     <div class="space-y-1">
@@ -132,12 +160,14 @@
         <label for="input-admin-fee" class="text-xs font-semibold text-zinc-700">Admin fee</label>
         <div class="inline-flex p-0.5 bg-zinc-100 rounded text-[10px] border border-zinc-200">
           <button
+            aria-pressed={adminFeeMode === 'percent'}
             onclick={() => setAdminMode('percent')}
             class="px-2 py-0.5 rounded cursor-pointer {adminFeeMode === 'percent' ? 'font-bold bg-white text-[#0F4C3A]' : 'text-zinc-600'}"
           >
             % of Base
           </button>
           <button
+            aria-pressed={adminFeeMode === 'dollar'}
             onclick={() => setAdminMode('dollar')}
             class="px-2 py-0.5 rounded cursor-pointer {adminFeeMode === 'dollar' ? 'font-bold bg-white text-[#0F4C3A]' : 'text-zinc-600'}"
           >

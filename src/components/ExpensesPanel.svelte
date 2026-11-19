@@ -43,11 +43,12 @@
       {#each expenseItems as item (item.id)}
         {@const exGst = item.amount / 1.1}
         {@const gst = item.amount - exGst}
-        <div class="p-2.5 bg-zinc-50 border border-zinc-200 rounded-md flex items-center justify-between gap-2 text-xs">
+        <div class="p-2.5 bg-zinc-50 border border-zinc-200 rounded-md flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 text-xs">
           <input
             type="text"
             bind:value={item.name}
-            class="flex-grow font-medium px-2 py-1 bg-white border border-zinc-300 rounded text-xs"
+            aria-label="Expense name"
+            class="w-full sm:w-auto sm:flex-grow font-medium px-2 py-1 bg-white border border-zinc-300 rounded text-xs"
           />
           <div class="w-24 relative">
             <span class="absolute left-1.5 top-1 text-[10px] text-zinc-400">$</span>
