@@ -35,8 +35,8 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2.5">
-      <div class="flex items-center gap-1.5 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
+      <div class="flex items-center gap-1.5 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 self-start">
         <label for="select-tax-year" class="text-xs text-zinc-500 font-medium">Tax year:</label>
         <select id="select-tax-year" bind:value={taxYear} class="bg-transparent text-zinc-900 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
           <option value="2027-28">2027–28 (Stage 3 — 14%)</option>
@@ -50,28 +50,30 @@
         </select>
       </div>
 
-      <button
-        type="button"
-        onclick={onExportCsv}
-        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
-      >
-        Export CSV
-      </button>
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button
+          type="button"
+          onclick={onExportCsv}
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
+        >
+          Export CSV
+        </button>
 
-      <button
-        type="button"
-        onclick={onCopyShareLink}
-        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0F4C3A] hover:bg-[#0a3629] text-white transition flex items-center gap-1.5 cursor-pointer"
-      >
-        {shareCopied ? 'Copied!' : 'Copy Share Link'}
-      </button>
+        <button
+          type="button"
+          onclick={onCopyShareLink}
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0F4C3A] hover:bg-[#0a3629] text-white transition flex items-center gap-1.5 cursor-pointer"
+        >
+          {shareCopied ? 'Copied!' : 'Copy Share Link'}
+        </button>
 
-      <button onclick={onReset} class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer">
-        <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        Reset defaults
-      </button>
+        <button onclick={onReset} class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Reset defaults
+        </button>
+      </div>
     </div>
   </div>
 </header>
