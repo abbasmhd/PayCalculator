@@ -709,7 +709,7 @@
 
   <footer class="pt-4 pb-2 text-center text-xs leading-relaxed text-zinc-500">
     <p>
-      The calculations in this app are estimates for information only. They are not financial, tax, or legal advice. Tax rates, thresholds, and formulas are hardcoded in <code class="font-mono">src/lib/taxEngine.ts</code> and may be out of date. Verify all figures against official sources such as the <a
+      The calculations in this app are estimates for information only. They are not financial, tax, or legal advice. Tax rates and thresholds used in these calculations may be out of date. Verify all figures against official sources such as the <a
         href="https://www.ato.gov.au/"
         target="_blank"
         rel="noopener noreferrer"
