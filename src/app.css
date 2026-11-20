@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: `dark:` utilities apply when an ancestor (the <html> element) has the `dark` class. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -28,4 +31,21 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #A1A1AA;
+}
+
+/* Dark theme: native form controls and dropdowns follow the dark colour scheme. */
+html.dark {
+  color-scheme: dark;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #09090B;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3F3F46;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #52525B;
 }

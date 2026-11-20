@@ -214,8 +214,8 @@
 
     const superRow =
       superMode === 'exclusive'
-        ? { name: 'Super Guarantee (+)', ...scale((p) => superVal * p), color: 'text-zinc-600', rowClass: '' }
-        : { name: 'Super Guarantee', ...scale((p) => -superVal * p), color: 'text-rose-600', rowClass: '' };
+        ? { name: 'Super Guarantee (+)', ...scale((p) => superVal * p), color: 'text-zinc-600 dark:text-zinc-400', rowClass: '' }
+        : { name: 'Super Guarantee', ...scale((p) => -superVal * p), color: 'text-rose-600 dark:text-rose-400', rowClass: '' };
 
     const section = (name: string) => ({
       name,
@@ -233,31 +233,31 @@
       { name: 'Base Gross Earnings', ...scale((p) => baseGross * p), color: '', rowClass: '' },
       superRow,
       ...(leavePayout > 0
-        ? [{ name: 'Leave Payout (+)', ...scale((p) => leavePayout * p), color: 'text-[#0F4C3A]', rowClass: '' }]
+        ? [{ name: 'Leave Payout (+)', ...scale((p) => leavePayout * p), color: 'text-[#0F4C3A] dark:text-emerald-400', rowClass: '' }]
         : []),
       section('Pre-Tax Deductions'),
-      { name: 'Reserved Leave', ...scale((p) => -leave * p), color: 'text-rose-600', rowClass: '' },
-      { name: 'Admin Fee', ...scale((p) => -admin * p), color: 'text-rose-600', rowClass: '' },
-      { name: 'Pre-Tax Expenses (Ex-GST)', ...scale((p) => -exGst * p), color: 'text-amber-700 font-semibold', rowClass: '' },
+      { name: 'Reserved Leave', ...scale((p) => -leave * p), color: 'text-rose-600 dark:text-rose-400', rowClass: '' },
+      { name: 'Admin Fee', ...scale((p) => -admin * p), color: 'text-rose-600 dark:text-rose-400', rowClass: '' },
+      { name: 'Pre-Tax Expenses (Ex-GST)', ...scale((p) => -exGst * p), color: 'text-amber-700 dark:text-amber-400 font-semibold', rowClass: '' },
       ...(carLeaseEnabled || result.carLeasePreTax > 0
         ? [
             {
               name: 'Novated Lease (Pre-Tax)',
               ...scale((p) => -result.carLeasePreTax * p),
-              color: 'text-amber-700 font-semibold',
+              color: 'text-amber-700 dark:text-amber-400 font-semibold',
               rowClass: ''
             }
           ]
         : []),
       section('Tax & Net'),
-      { name: 'Taxable Income', ...scale((p) => taxable * p), color: '', rowClass: 'font-bold bg-zinc-50 text-zinc-900' },
-      { name: 'PAYG Tax Withheld', ...scale((p) => -periodTax * p), color: 'text-rose-600', rowClass: '' },
+      { name: 'Taxable Income', ...scale((p) => taxable * p), color: '', rowClass: 'font-bold bg-zinc-50 dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100' },
+      { name: 'PAYG Tax Withheld', ...scale((p) => -periodTax * p), color: 'text-rose-600 dark:text-rose-400', rowClass: '' },
       section('Tax-Free Reimbursements'),
       {
         name: 'Expense Reimbursements',
         ...scale((p) => incGst * p),
         a: annualReimbursements,
-        color: 'text-[#0F4C3A] font-semibold',
+        color: 'text-[#0F4C3A] dark:text-emerald-400 font-semibold',
         rowClass: ''
       },
       ...(carLeaseEnabled || result.carLeasePostTax > 0
@@ -265,7 +265,7 @@
             {
               name: 'Novated Lease (Post-Tax ECM)',
               ...scale((p) => -result.carLeasePostTax * p),
-              color: 'text-rose-600',
+              color: 'text-rose-600 dark:text-rose-400',
               rowClass: ''
             }
           ]
@@ -275,7 +275,7 @@
         ...scale((p) => netPay * p),
         a: result.annualNetPay,
         color: '',
-        rowClass: 'font-extrabold bg-zinc-900 text-white border-t-2 border-zinc-900'
+        rowClass: 'font-extrabold bg-zinc-900 dark:bg-zinc-950 text-white border-t-2 border-zinc-900 dark:border-zinc-950'
       }
     ];
   });
@@ -736,13 +736,13 @@
     </div>
   </div>
 
-  <footer class="pt-4 pb-2 text-center text-xs leading-relaxed text-zinc-500">
+  <footer class="pt-4 pb-2 text-center text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
     <p>
       The calculations in this app are estimates for information only. They are not financial, tax, or legal advice. Tax rates and thresholds used in these calculations may be out of date. Verify all figures against official sources such as the <a
         href="https://www.ato.gov.au/"
         target="_blank"
         rel="noopener noreferrer"
-        class="underline hover:text-zinc-700">Australian Taxation Office (ATO)</a> before making decisions.
+        class="underline hover:text-zinc-700 dark:hover:text-zinc-200">Australian Taxation Office (ATO)</a> before making decisions.
     </p>
   </footer>
 </main>
@@ -751,10 +751,10 @@
   <div
     role="status"
     aria-live="polite"
-    class="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-zinc-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg border border-zinc-700"
+    class="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg border border-zinc-700"
   >
     <span>Defaults restored</span>
-    <span class="text-zinc-500">—</span>
+    <span class="text-zinc-500 dark:text-zinc-400">—</span>
     <button
       onclick={undoReset}
       class="font-bold text-emerald-300 hover:text-emerald-200 underline cursor-pointer"
