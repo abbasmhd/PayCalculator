@@ -1,14 +1,28 @@
 <!DOCTYPE html>
-<html lang="en-AU" class="h-full bg-[#F7F6F2]">
+<html lang="en-AU" class="h-full bg-[#F7F6F2] dark:bg-zinc-950">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    // Apply the theme before first paint to avoid a flash of the wrong theme.
+    // Saved explicit choice ('light' | 'dark') wins; otherwise follow prefers-color-scheme.
+    // Keep the storage key in sync with THEME_STORAGE_KEY in src/components/Header.svelte.
+    (function () {
+      try {
+        var saved = localStorage.getItem('paycalculator-au-theme-v1');
+        var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+      } catch (e) {
+        // Storage or matchMedia unavailable: stay on the default light theme
+      }
+    })();
+  </script>
   <title>PayCalculator AU — Contractor & Salary Packaging Tax Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-<body class="h-full text-zinc-900 antialiased flex flex-col min-h-screen">
+<body class="h-full text-zinc-900 dark:text-zinc-100 dark:bg-zinc-950 antialiased flex flex-col min-h-screen">
   <div id="app" class="flex flex-col min-h-screen"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>

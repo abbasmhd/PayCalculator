@@ -43,15 +43,15 @@
   }
 </script>
 
-<div class="bg-white rounded-lg border border-zinc-200 p-5 space-y-4">
-  <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
-    <h2 class="text-sm font-bold text-zinc-900">1. Contractor base earnings</h2>
-    <span class="text-xs text-zinc-500">Rate &amp; work units</span>
+<div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5 space-y-4">
+  <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+    <h2 class="text-sm font-bold text-zinc-900 dark:text-zinc-100">1. Contractor base earnings</h2>
+    <span class="text-xs text-zinc-500 dark:text-zinc-400">Rate &amp; work units</span>
   </div>
 
   <div class="grid grid-cols-2 gap-3">
     <div>
-      <label for="input-units-worked" class="block text-xs font-semibold text-zinc-700 mb-1">
+      <label for="input-units-worked" class="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
         {unitType === 'hourly' ? 'Hours / Pay Cycle' : 'Days / Pay Cycle'}
       </label>
       <input
@@ -60,11 +60,11 @@
         bind:value={unitsWorked}
         step="0.25"
         min="0"
-        class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+        class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 dark:focus:ring-emerald-400/30 focus:border-[#0F4C3A] dark:focus:border-emerald-500"
       />
     </div>
     <div>
-      <label for="input-unit-rate" class="block text-xs font-semibold text-zinc-700 mb-1">
+      <label for="input-unit-rate" class="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
         {unitType === 'hourly' ? 'Hourly Rate ($ AUD)' : 'Daily Rate ($ AUD)'}
       </label>
       <input
@@ -73,32 +73,32 @@
         bind:value={unitRate}
         step="0.01"
         min="0"
-        class="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+        class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 dark:focus:ring-emerald-400/30 focus:border-[#0F4C3A] dark:focus:border-emerald-500"
       />
     </div>
   </div>
 
-  <div class="p-2.5 bg-zinc-50 rounded-md border border-zinc-200 flex justify-between items-center text-xs">
-    <span class="text-zinc-600 font-medium">Gross invoiced earnings</span>
-    <span class="font-bold text-zinc-900 tabular-nums">{formatAUD(baseGross)}</span>
+  <div class="p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-md border border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs">
+    <span class="text-zinc-600 dark:text-zinc-400 font-medium">Gross invoiced earnings</span>
+    <span class="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatAUD(baseGross)}</span>
   </div>
 
   <!-- Superannuation -->
-  <div class="pt-3 border-t border-zinc-100 space-y-2">
+  <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
     <div class="flex items-center justify-between">
-      <label for="input-super-rate" class="text-xs font-semibold text-zinc-700">Super guarantee</label>
-      <div class="inline-flex p-0.5 bg-zinc-100 rounded-md text-[11px] border border-zinc-200">
+      <label for="input-super-rate" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Super guarantee</label>
+      <div class="inline-flex p-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-[11px] border border-zinc-200 dark:border-zinc-800">
         <button
           aria-pressed={superMode === 'inclusive'}
           onclick={() => (superMode = 'inclusive')}
-          class="px-2 py-0.5 rounded cursor-pointer {superMode === 'inclusive' ? 'font-bold bg-white text-[#0F4C3A] shadow-xs' : 'text-zinc-600 hover:text-zinc-900'}"
+          class="px-2 py-0.5 rounded cursor-pointer {superMode === 'inclusive' ? 'font-bold bg-white dark:bg-zinc-900 text-[#0F4C3A] dark:text-emerald-400 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}"
         >
           Inclusive
         </button>
         <button
           aria-pressed={superMode === 'exclusive'}
           onclick={() => (superMode = 'exclusive')}
-          class="px-2 py-0.5 rounded cursor-pointer {superMode === 'exclusive' ? 'font-bold bg-white text-[#0F4C3A] shadow-xs' : 'text-zinc-600 hover:text-zinc-900'}"
+          class="px-2 py-0.5 rounded cursor-pointer {superMode === 'exclusive' ? 'font-bold bg-white dark:bg-zinc-900 text-[#0F4C3A] dark:text-emerald-400 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}"
         >
           On Top
         </button>
@@ -112,19 +112,19 @@
           bind:value={superRate}
           step="0.25"
           min="0"
-          class="w-full pl-3 pr-7 py-1.5 border border-zinc-300 rounded-md text-xs font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+          class="w-full pl-3 pr-7 py-1.5 border border-zinc-300 dark:border-zinc-600 rounded-md text-xs font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 dark:focus:ring-emerald-400/30 focus:border-[#0F4C3A] dark:focus:border-emerald-500"
         />
         <span class="absolute right-2.5 top-2 text-xs text-zinc-400 font-bold">%</span>
       </div>
-      <span class="text-xs font-bold text-rose-600 w-24 text-right tabular-nums">-{formatAUD(superAmount)}</span>
+      <span class="text-xs font-bold text-rose-600 dark:text-rose-400 w-24 text-right tabular-nums">-{formatAUD(superAmount)}</span>
     </div>
 
     <!-- Voluntary / Salary-Sacrificed Super & $30k Cap Tracker -->
     <div class="pt-2 space-y-1.5">
       <div class="flex items-center justify-between">
-        <label for="input-voluntary-super" class="text-xs font-semibold text-zinc-700">Voluntary / salary-sacrificed super</label>
+        <label for="input-voluntary-super" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Voluntary / salary-sacrificed super</label>
         {#if voluntarySuper > 0}
-          <button onclick={() => (voluntarySuper = 0)} class="text-[11px] font-semibold text-[#0F4C3A] hover:underline cursor-pointer">Set to $0</button>
+          <button onclick={() => (voluntarySuper = 0)} class="text-[11px] font-semibold text-[#0F4C3A] dark:text-emerald-400 hover:underline cursor-pointer">Set to $0</button>
         {/if}
       </div>
       <div class="relative">
@@ -135,7 +135,7 @@
           bind:value={voluntarySuper}
           min="0"
           step="25"
-          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 dark:border-zinc-600 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 dark:focus:ring-emerald-400/30 focus:border-[#0F4C3A] dark:focus:border-emerald-500"
         />
       </div>
       {#if true}
@@ -143,21 +143,21 @@
         {@const capPct = Math.min(100, (annualConcessional / concessionalCap) * 100)}
         {@const overCap = annualConcessional > concessionalCap}
         {@const capFormatted = `$${concessionalCap.toLocaleString('en-AU')}`}
-        <div class="bg-zinc-50 rounded-md p-2 border border-zinc-200/80 space-y-1">
+        <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2 border border-zinc-200/80 dark:border-zinc-800/80 space-y-1">
           <div class="flex items-center justify-between text-[11px]">
-            <span class="text-zinc-600 font-medium">Annual concessional cap ({capFormatted})</span>
-            <span class="font-bold tabular-nums {overCap ? 'text-rose-600' : 'text-zinc-800'}">
+            <span class="text-zinc-600 dark:text-zinc-400 font-medium">Annual concessional cap ({capFormatted})</span>
+            <span class="font-bold tabular-nums {overCap ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-800 dark:text-zinc-200'}">
               {formatAUD(annualConcessional)} / {capFormatted}
             </span>
           </div>
-          <div class="w-full h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+          <div class="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
             <div
               class="h-full transition-all {overCap ? 'bg-rose-500' : 'bg-[#0F4C3A]'}"
               style="width: {capPct}%"
             ></div>
           </div>
           {#if overCap}
-            <p class="text-[10px] text-rose-600 font-medium">Exceeds {capFormatted} cap by {formatAUD(annualConcessional - concessionalCap)}</p>
+            <p class="text-[10px] text-rose-600 dark:text-rose-400 font-medium">Exceeds {capFormatted} cap by {formatAUD(annualConcessional - concessionalCap)}</p>
           {/if}
         </div>
       {/if}
@@ -165,13 +165,13 @@
   </div>
 
   <!-- Contractor Deductions -->
-  <div class="pt-3 border-t border-zinc-100 space-y-3">
+  <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
     <div class="space-y-1">
       <div class="flex items-center justify-between">
-        <label for="input-leave" class="text-xs font-semibold text-zinc-700">Reserved leave</label>
-        <button onclick={() => (leaveReserve = 0)} class="text-[11px] font-semibold text-[#0F4C3A] hover:underline cursor-pointer">Set to $0</button>
+        <label for="input-leave" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Reserved leave</label>
+        <button onclick={() => (leaveReserve = 0)} class="text-[11px] font-semibold text-[#0F4C3A] dark:text-emerald-400 hover:underline cursor-pointer">Set to $0</button>
       </div>
-      <p class="text-[11px] text-zinc-500">Set aside pre-tax into your leave pot</p>
+      <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Set aside pre-tax into your leave pot</p>
       <div class="relative">
         <span class="absolute left-3 top-2 text-xs text-zinc-400 font-bold">$</span>
         <input
@@ -179,19 +179,19 @@
           type="number"
           bind:value={leaveReserve}
           step="10"
-          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 dark:border-zinc-600 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 dark:focus:ring-emerald-400/30 focus:border-[#0F4C3A] dark:focus:border-emerald-500"
         />
       </div>
     </div>
 
     <div class="space-y-1">
       <div class="flex items-center justify-between">
-        <label for="input-leave-payout" class="text-xs font-semibold text-zinc-700">Leave payout</label>
+        <label for="input-leave-payout" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Leave payout</label>
         {#if leavePayout > 0}
-          <button onclick={() => (leavePayout = 0)} class="text-[11px] font-semibold text-[#0F4C3A] hover:underline cursor-pointer">Set to $0</button>
+          <button onclick={() => (leavePayout = 0)} class="text-[11px] font-semibold text-[#0F4C3A] dark:text-emerald-400 hover:underline cursor-pointer">Set to $0</button>
         {/if}
       </div>
-      <p class="text-[11px] text-zinc-500">Taxable leave cashed out this cycle</p>
+      <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Taxable leave cashed out this cycle</p>
       <div class="relative">
         <span class="absolute left-3 top-2 text-xs text-zinc-400 font-bold">$</span>
         <input
@@ -200,26 +200,26 @@
           bind:value={leavePayout}
           min="0"
           step="10"
-          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+          class="w-full pl-7 pr-3 py-1.5 border border-zinc-300 dark:border-zinc-600 rounded-md text-xs font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 dark:focus:ring-emerald-400/30 focus:border-[#0F4C3A] dark:focus:border-emerald-500"
         />
       </div>
     </div>
 
     <div class="space-y-1">
       <div class="flex items-center justify-between">
-        <label for="input-admin-fee" class="text-xs font-semibold text-zinc-700">Admin fee</label>
-        <div class="inline-flex p-0.5 bg-zinc-100 rounded text-[10px] border border-zinc-200">
+        <label for="input-admin-fee" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Admin fee</label>
+        <div class="inline-flex p-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-[10px] border border-zinc-200 dark:border-zinc-800">
           <button
             aria-pressed={adminFeeMode === 'percent'}
             onclick={() => setAdminMode('percent')}
-            class="px-2 py-0.5 rounded cursor-pointer {adminFeeMode === 'percent' ? 'font-bold bg-white text-[#0F4C3A]' : 'text-zinc-600'}"
+            class="px-2 py-0.5 rounded cursor-pointer {adminFeeMode === 'percent' ? 'font-bold bg-white dark:bg-zinc-900 text-[#0F4C3A] dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}"
           >
             % of Base
           </button>
           <button
             aria-pressed={adminFeeMode === 'dollar'}
             onclick={() => setAdminMode('dollar')}
-            class="px-2 py-0.5 rounded cursor-pointer {adminFeeMode === 'dollar' ? 'font-bold bg-white text-[#0F4C3A]' : 'text-zinc-600'}"
+            class="px-2 py-0.5 rounded cursor-pointer {adminFeeMode === 'dollar' ? 'font-bold bg-white dark:bg-zinc-900 text-[#0F4C3A] dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}"
           >
             $ Amount
           </button>
@@ -233,11 +233,11 @@
             bind:value={adminFeeInput}
             step="0.05"
             min="0"
-            class="w-full pl-3 pr-7 py-1.5 border border-zinc-300 rounded-md text-xs font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"
+            class="w-full pl-3 pr-7 py-1.5 border border-zinc-300 dark:border-zinc-600 rounded-md text-xs font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 dark:focus:ring-emerald-400/30 focus:border-[#0F4C3A] dark:focus:border-emerald-500"
           />
           <span class="absolute right-2.5 top-2 text-xs text-zinc-400 font-bold">{adminFeeMode === 'percent' ? '%' : '$'}</span>
         </div>
-        <span class="text-xs font-bold text-rose-600 w-24 text-right tabular-nums">-{formatAUD(adminFee)}</span>
+        <span class="text-xs font-bold text-rose-600 dark:text-rose-400 w-24 text-right tabular-nums">-{formatAUD(adminFee)}</span>
       </div>
     </div>
   </div>

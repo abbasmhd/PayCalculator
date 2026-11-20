@@ -16,9 +16,27 @@
     onCopyShareLink,
     shareCopied = false
   }: Props = $props();
+
+  // Must match the key read by the inline script in index.html (applies the theme before first paint).
+  const THEME_STORAGE_KEY = 'paycalculator-au-theme-v1';
+
+  // The inline script in index.html has already set the `dark` class, so read it back on init.
+  let isDark = $state(
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('dark', isDark);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
+    } catch {
+      // Storage unavailable (e.g. private mode): the theme still applies for this session
+    }
+  }
 </script>
 
-<header class="bg-white border-b border-zinc-200 sticky top-0 z-50">
+<header class="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div class="flex items-center gap-3">
       <div class="w-9 h-9 bg-[#0F4C3A] rounded-lg text-white flex items-center justify-center shrink-0">
@@ -27,18 +45,18 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-base font-bold tracking-tight text-zinc-900 flex items-center gap-2">
+        <h1 class="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
           PayCalculator
-          <span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-zinc-100 text-zinc-700 border border-zinc-200">AU Contractor</span>
+          <span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800">AU Contractor</span>
         </h1>
-        <p class="text-xs text-zinc-500">ATO Schedule 1 PAYG, salary packaging, Medicare &amp; HECS</p>
+        <p class="text-xs text-zinc-500 dark:text-zinc-400">ATO Schedule 1 PAYG, salary packaging, Medicare &amp; HECS</p>
       </div>
     </div>
 
     <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
-      <div class="flex items-center gap-1.5 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 self-start">
-        <label for="select-tax-year" class="text-xs text-zinc-500 font-medium">Tax year:</label>
-        <select id="select-tax-year" bind:value={taxYear} class="bg-transparent text-zinc-900 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
+      <div class="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800 self-start">
+        <label for="select-tax-year" class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Tax year:</label>
+        <select id="select-tax-year" bind:value={taxYear} class="bg-transparent text-zinc-900 dark:text-zinc-100 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
           <option value="2027-28">2027–28 (Stage 3 — 14%)</option>
           <option value="2026-27">2026–27 (Stage 3)</option>
           <option value="2025-26">2025–26 (Stage 3)</option>
@@ -54,7 +72,7 @@
         <button
           type="button"
           onclick={onExportCsv}
-          class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition flex items-center gap-1.5 cursor-pointer"
         >
           Export CSV
         </button>
@@ -67,11 +85,29 @@
           {shareCopied ? 'Copied!' : 'Copy Share Link'}
         </button>
 
-        <button onclick={onReset} class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer">
-          <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick={onReset} class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
           Reset defaults
+        </button>
+
+        <button
+          type="button"
+          onclick={toggleTheme}
+          aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          class="p-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition flex items-center justify-center cursor-pointer"
+        >
+          {#if isDark}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+          {:else}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+          {/if}
         </button>
       </div>
     </div>
