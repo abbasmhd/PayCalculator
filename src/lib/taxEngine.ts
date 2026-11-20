@@ -130,32 +130,32 @@ export function getTaxBrackets(residency: ResidencyStatus, taxYear: TaxYear = '2
   if (isStage2TaxYear(taxYear)) {
     if (residency === 'foreign_resident') {
       return [
-        { name: '$0 - $120,000', max: 120000, rate: 32.5 },
-        { name: '$120,001 - $180,000', max: 180000, rate: 37 },
+        { name: '$0 – $120,000', max: 120000, rate: 32.5 },
+        { name: '$120,001 – $180,000', max: 180000, rate: 37 },
         { name: '$180,001+', max: 300000, rate: 45 }
       ];
     }
     if (residency === 'whm') {
       return [
-        { name: '$0 - $45,000', max: 45000, rate: 15 },
-        { name: '$45,001 - $120,000', max: 120000, rate: 32.5 },
-        { name: '$120,001 - $180,000', max: 180000, rate: 37 },
+        { name: '$0 – $45,000', max: 45000, rate: 15 },
+        { name: '$45,001 – $120,000', max: 120000, rate: 32.5 },
+        { name: '$120,001 – $180,000', max: 180000, rate: 37 },
         { name: '$180,001+', max: 300000, rate: 45 }
       ];
     }
     if (residency === 'resident_no_tft') {
       return [
-        { name: '$0 - $45,000', max: 45000, rate: 19 },
-        { name: '$45,001 - $120,000', max: 120000, rate: 32.5 },
-        { name: '$120,001 - $180,000', max: 180000, rate: 37 },
+        { name: '$0 – $45,000', max: 45000, rate: 19 },
+        { name: '$45,001 – $120,000', max: 120000, rate: 32.5 },
+        { name: '$120,001 – $180,000', max: 180000, rate: 37 },
         { name: '$180,001+', max: 300000, rate: 45 }
       ];
     }
     return [
-      { name: '$0 - $18,200', max: 18200, rate: 0 },
-      { name: '$18,201 - $45,000', max: 45000, rate: 19 },
-      { name: '$45,001 - $120,000', max: 120000, rate: 32.5 },
-      { name: '$120,001 - $180,000', max: 180000, rate: 37 },
+      { name: '$0 – $18,200', max: 18200, rate: 0 },
+      { name: '$18,201 – $45,000', max: 45000, rate: 19 },
+      { name: '$45,001 – $120,000', max: 120000, rate: 32.5 },
+      { name: '$120,001 – $180,000', max: 180000, rate: 37 },
       { name: '$180,001+', max: 300000, rate: 45 }
     ];
   }
@@ -164,32 +164,32 @@ export function getTaxBrackets(residency: ResidencyStatus, taxYear: TaxYear = '2
 
   if (residency === 'foreign_resident') {
     return [
-      { name: '$0 - $135,000', max: 135000, rate: 30 },
-      { name: '$135,001 - $190,000', max: 190000, rate: 37 },
+      { name: '$0 – $135,000', max: 135000, rate: 30 },
+      { name: '$135,001 – $190,000', max: 190000, rate: 37 },
       { name: '$190,001+', max: 300000, rate: 45 }
     ];
   }
   if (residency === 'whm') {
     return [
-      { name: '$0 - $45,000', max: 45000, rate: 15 },
-      { name: '$45,001 - $135,000', max: 135000, rate: 30 },
-      { name: '$135,001 - $190,000', max: 190000, rate: 37 },
+      { name: '$0 – $45,000', max: 45000, rate: 15 },
+      { name: '$45,001 – $135,000', max: 135000, rate: 30 },
+      { name: '$135,001 – $190,000', max: 190000, rate: 37 },
       { name: '$190,001+', max: 300000, rate: 45 }
     ];
   }
   if (residency === 'resident_no_tft') {
     return [
-      { name: '$0 - $45,000', max: 45000, rate: lowRate },
-      { name: '$45,001 - $135,000', max: 135000, rate: 30 },
-      { name: '$135,001 - $190,000', max: 190000, rate: 37 },
+      { name: '$0 – $45,000', max: 45000, rate: lowRate },
+      { name: '$45,001 – $135,000', max: 135000, rate: 30 },
+      { name: '$135,001 – $190,000', max: 190000, rate: 37 },
       { name: '$190,001+', max: 300000, rate: 45 }
     ];
   }
   return [
-    { name: '$0 - $18,200', max: 18200, rate: 0 },
-    { name: '$18,201 - $45,000', max: 45000, rate: lowRate },
-    { name: '$45,001 - $135,000', max: 135000, rate: 30 },
-    { name: '$135,001 - $190,000', max: 190000, rate: 37 },
+    { name: '$0 – $18,200', max: 18200, rate: 0 },
+    { name: '$18,201 – $45,000', max: 45000, rate: lowRate },
+    { name: '$45,001 – $135,000', max: 135000, rate: 30 },
+    { name: '$135,001 – $190,000', max: 190000, rate: 37 },
     { name: '$190,001+', max: 300000, rate: 45 }
   ];
 }
