@@ -9,7 +9,9 @@ import {
   getConcessionalCap,
   getEffectivePeriods,
   estimateYtdTaxRefund,
-  type PayrollInput
+  getSuperGuaranteeRate,
+  type PayrollInput,
+  type TaxYear
 } from './taxEngine';
 
 const defaultInput: PayrollInput = {
@@ -508,5 +510,50 @@ describe('getConcessionalCap', () => {
     expect(getConcessionalCap('2025-26')).toBe(30000);
     expect(getConcessionalCap('2026-27')).toBe(32500);
     expect(getConcessionalCap('2027-28')).toBe(32500);
+  });
+});
+
+describe('Superannuation guarantee rate by financial year (ATO Table 21)', () => {
+  const expectedRates: [TaxYear, number][] = [
+    ['2020-21', 9.5],
+    ['2021-22', 10],
+    ['2022-23', 10.5],
+    ['2023-24', 11],
+    ['2024-25', 11.5],
+    ['2025-26', 12],
+    ['2026-27', 12],
+    ['2027-28', 12]
+  ];
+
+  it.each(expectedRates)('returns the ATO SG rate for %s (%s%%)', (taxYear, rate) => {
+    expect(getSuperGuaranteeRate(taxYear)).toBe(rate);
+  });
+
+  it('uses the selected year rate in the employer super amount (exclusive mode)', () => {
+    for (const [taxYear, rate] of expectedRates) {
+      const res = calculatePayroll({
+        ...defaultInput,
+        taxYear,
+        superMode: 'exclusive',
+        superRate: getSuperGuaranteeRate(taxYear),
+        unitsWorked: 40,
+        unitRate: 100
+      });
+      expect(res.baseGross).toBe(4000);
+      expect(res.superAmount).toBeCloseTo(4000 * (rate / 100), 2);
+    }
+  });
+
+  it('uses the selected year rate in the employer super amount (inclusive mode)', () => {
+    const res2020 = calculatePayroll({
+      ...defaultInput,
+      taxYear: '2020-21',
+      superRate: getSuperGuaranteeRate('2020-21'),
+      unitsWorked: 40,
+      unitRate: 109.5
+    });
+    // 4380 gross includes 9.5% super: OTE = 4380 / 1.095 = 4000
+    expect(res2020.superAmount).toBeCloseTo(380, 2);
+    expect(res2020.totalGrossTaxablePay).toBeCloseTo(4000, 2);
   });
 });

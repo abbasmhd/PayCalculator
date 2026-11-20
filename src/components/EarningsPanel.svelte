@@ -7,6 +7,7 @@
     unitRate: number;
     superMode: SuperMode;
     superRate: number;
+    superRateAuto: boolean;
     voluntarySuper: number;
     concessionalCap: number;
     effectivePeriods: number;
@@ -25,6 +26,7 @@
     unitRate = $bindable(),
     superMode = $bindable(),
     superRate = $bindable(),
+    superRateAuto = $bindable(),
     voluntarySuper = $bindable(),
     concessionalCap,
     effectivePeriods,
@@ -110,6 +112,7 @@
           id="input-super-rate"
           type="number"
           bind:value={superRate}
+          oninput={() => (superRateAuto = false)}
           step="0.25"
           min="0"
           class="w-full pl-3 pr-7 py-1.5 border border-zinc-300 rounded-md text-xs font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F4C3A]/20 focus:border-[#0F4C3A]"

@@ -91,6 +91,28 @@ export function getEffectivePeriods(payCycle: PayCycle, workingWeeks?: number): 
   return (PERIODS_PER_YEAR[payCycle] || 52) * (weeks / 52);
 }
 
+/**
+ * Superannuation Guarantee (SG) rate by financial year (1 July - 30 June), general rate.
+ * Source: Australian Taxation Office, "Super guarantee", Table 21 "Super guarantee percentage":
+ * https://www.ato.gov.au/tax-rates-and-codes/key-superannuation-rates-and-thresholds/super-guarantee
+ * Retrieved 20 November 2026 (ATO page "Last updated 17 April 2026").
+ * 2027-28 is listed by the ATO as "1 July 2027 onwards" at 12.00%.
+ */
+export const SUPER_GUARANTEE_RATES: Record<TaxYear, number> = {
+  '2020-21': 9.5,
+  '2021-22': 10,
+  '2022-23': 10.5,
+  '2023-24': 11,
+  '2024-25': 11.5,
+  '2025-26': 12,
+  '2026-27': 12,
+  '2027-28': 12
+};
+
+export function getSuperGuaranteeRate(taxYear: TaxYear): number {
+  return SUPER_GUARANTEE_RATES[taxYear] ?? SUPER_GUARANTEE_RATES['2026-27'];
+}
+
 export function getConcessionalCap(taxYear: TaxYear): number {
   if (taxYear === '2020-21') return 25000;
   if (taxYear === '2021-22' || taxYear === '2022-23' || taxYear === '2023-24') return 27500;

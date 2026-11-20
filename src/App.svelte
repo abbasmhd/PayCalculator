@@ -2,6 +2,7 @@
   import {
     calculatePayroll,
     getConcessionalCap,
+    getSuperGuaranteeRate,
     getTaxBrackets,
     PERIODS_PER_YEAR,
     type AdminFeeMode,
@@ -55,6 +56,15 @@
     }
   }
 
+  // Saves written before superRateAuto existed carry no flag. Treat the stored SG rate as
+  // "follows the tax year" only when it is missing, 0 (the old unset default) or exactly the
+  // rate for its saved year, so a custom rate typed by the user is never overwritten.
+  function legacySuperRateFollowsYear(rate: unknown, year: unknown): boolean {
+    if (typeof rate !== 'number') return true;
+    const taxYear = (typeof year === 'string' ? year : '2026-27') as TaxYear;
+    return rate === 0 || rate === getSuperGuaranteeRate(taxYear);
+  }
+
   const saved = loadSavedState();
 
   let payCycle = $state<PayCycle>((saved.payCycle as PayCycle) ?? 'weekly');
@@ -62,7 +72,13 @@
   let unitsWorked = $state<number>((saved.unitsWorked as number) ?? 0);
   let unitRate = $state<number>((saved.unitRate as number) ?? 0);
   let superMode = $state<SuperMode>((saved.superMode as SuperMode) ?? 'inclusive');
-  let superRate = $state<number>((saved.superRate as number) ?? 0);
+  let superRate = $state<number>(
+    (saved.superRate as number) ?? getSuperGuaranteeRate((saved.taxYear as TaxYear) ?? '2026-27')
+  );
+  // true = SG rate follows the selected tax year; becomes false once the user types their own rate
+  let superRateAuto = $state<boolean>(
+    (saved.superRateAuto as boolean) ?? legacySuperRateFollowsYear(saved.superRate, saved.taxYear)
+  );
   let voluntarySuper = $state<number>((saved.voluntarySuper as number) ?? 0);
   let workingWeeks = $state<number>((saved.workingWeeks as number) ?? 52);
   let leaveReserve = $state<number>((saved.leaveReserve as number) ?? 0);
@@ -92,6 +108,12 @@
   let carLeasePerPeriod = $state<number>((saved.carLeasePerPeriod as number) ?? 0);
   let carBaseValue = $state<number>((saved.carBaseValue as number) ?? 0);
 
+  // Keep the SG rate in step with the selected tax year, unless the user has entered their own rate
+  $effect(() => {
+    const yearRate = getSuperGuaranteeRate(taxYear);
+    if (superRateAuto) superRate = yearRate;
+  });
+
   $effect(() => {
     try {
       if (typeof localStorage === 'undefined') return;
@@ -104,6 +126,7 @@
           unitRate,
           superMode,
           superRate,
+          superRateAuto,
           voluntarySuper,
           workingWeeks,
           leaveReserve,
@@ -382,6 +405,7 @@
     unitRate = inp.unitRate;
     superMode = inp.superMode;
     superRate = inp.superRate;
+    superRateAuto = legacySuperRateFollowsYear(inp.superRate, inp.taxYear);
     voluntarySuper = inp.voluntarySuper ?? 0;
     workingWeeks = inp.workingWeeks ?? 52;
     leaveReserve = inp.leaveReserve;
@@ -446,7 +470,7 @@
 
   async function copyShareLink() {
     try {
-      const encoded = btoa(encodeURIComponent(JSON.stringify(getCurrentInput())));
+      const encoded = btoa(encodeURIComponent(JSON.stringify({ ...getCurrentInput(), superRateAuto })));
       const url = new URL(window.location.href);
       url.searchParams.set('s', encoded);
       await navigator.clipboard.writeText(url.toString());
@@ -470,6 +494,7 @@
     unitRate: number;
     superMode: SuperMode;
     superRate: number;
+    superRateAuto: boolean;
     voluntarySuper: number;
     workingWeeks: number;
     leaveReserve: number;
@@ -505,6 +530,7 @@
       unitRate,
       superMode,
       superRate,
+      superRateAuto,
       voluntarySuper,
       workingWeeks,
       leaveReserve,
@@ -533,7 +559,8 @@
     unitsWorked = 0;
     unitRate = 0;
     superMode = 'inclusive';
-    superRate = 12.0;
+    superRate = getSuperGuaranteeRate('2026-27');
+    superRateAuto = true;
     voluntarySuper = 0;
     workingWeeks = 52;
     leaveReserve = 0;
@@ -571,6 +598,7 @@
     unitRate = previousState.unitRate;
     superMode = previousState.superMode;
     superRate = previousState.superRate;
+    superRateAuto = previousState.superRateAuto;
     voluntarySuper = previousState.voluntarySuper;
     workingWeeks = previousState.workingWeeks;
     leaveReserve = previousState.leaveReserve;
@@ -619,6 +647,7 @@
         bind:unitRate
         bind:superMode
         bind:superRate
+        bind:superRateAuto
         bind:voluntarySuper
         concessionalCap={getConcessionalCap(taxYear)}
         effectivePeriods={result.effectivePeriods}
