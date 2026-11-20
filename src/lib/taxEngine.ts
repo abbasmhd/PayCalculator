@@ -518,7 +518,8 @@ export interface YtdRefundResult {
 export function estimateYtdTaxRefund(input: YtdRefundInput): YtdRefundResult {
   const gross = Math.max(0, input.ytdGross || 0);
   const withheld = Math.max(0, input.ytdTaxWithheld || 0);
-  const incomeTax = getAnnualTax(gross, input.residency, input.taxYear);
+  const hasTft = input.residency === 'resident_tft';
+  const incomeTax = getAnnualTax(gross, input.taxYear, input.residency, hasTft);
   const isResident = input.residency === 'resident_tft' || input.residency === 'resident_no_tft';
 
   const medicareLevy = input.applyMedicare && isResident ? gross * 0.02 : 0;

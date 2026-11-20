@@ -30,11 +30,6 @@
   const STORAGE_KEY = 'paycalculator-au-state-v1';
   const SCENARIOS_STORAGE_KEY = 'paycalculator-au-scenarios-v1';
 
-  const DEFAULT_EXPENSE_ITEMS: ExpenseItem[] = [
-    { id: 1, name: 'Portable Hardware', amount: 1372.0 },
-    { id: 2, name: 'Business Expenses', amount: 176.55 }
-  ];
-
   function loadSavedState(): Record<string, unknown> {
     try {
       if (typeof window !== 'undefined' && window.location.search) {
@@ -87,7 +82,11 @@
   let expenseItems = $state<ExpenseItem[]>(
     Array.isArray(saved.expenseItems) ? (saved.expenseItems as ExpenseItem[]) : []
   );
-  let nextExpenseId = Math.max(0, ...expenseItems.map((i) => i.id)) + 1;
+  function nextExpenseIdFor(items: ExpenseItem[]): number {
+    return Math.max(0, ...items.map((i) => i.id)) + 1;
+  }
+
+  let nextExpenseId = nextExpenseIdFor(expenseItems);
   let carLeaseEnabled = $state<boolean>((saved.carLeaseEnabled as boolean) ?? false);
   let carLeaseType = $state<'ev' | 'ice'>((saved.carLeaseType as 'ev' | 'ice') ?? 'ev');
   let carLeasePerPeriod = $state<number>((saved.carLeasePerPeriod as number) ?? 0);
@@ -184,6 +183,12 @@
       a: fn(result.effectivePeriods)
     });
 
+    // One-off claims count once in the annual figure, matching annualNetPay in taxEngine.ts
+    const annualReimbursements =
+      result.oneOffIncGstPaid > 0 && result.effectivePeriods >= 1
+        ? result.recurringIncGstPaid * (result.effectivePeriods - 1) + incGst
+        : incGst * result.effectivePeriods;
+
     const superRow =
       superMode === 'exclusive'
         ? { name: 'Super Guarantee (+)', ...scale((p) => superVal * p), color: 'text-zinc-600', rowClass: '' }
@@ -225,7 +230,13 @@
       { name: 'Taxable Income', ...scale((p) => taxable * p), color: '', rowClass: 'font-bold bg-zinc-50 text-zinc-900' },
       { name: 'PAYG Tax Withheld', ...scale((p) => -periodTax * p), color: 'text-rose-600', rowClass: '' },
       section('Tax-Free Reimbursements'),
-      { name: 'Expense Reimbursements', ...scale((p) => incGst * p), color: 'text-[#0F4C3A] font-semibold', rowClass: '' },
+      {
+        name: 'Expense Reimbursements',
+        ...scale((p) => incGst * p),
+        a: annualReimbursements,
+        color: 'text-[#0F4C3A] font-semibold',
+        rowClass: ''
+      },
       ...(carLeaseEnabled || result.carLeasePostTax > 0
         ? [
             {
@@ -239,6 +250,7 @@
       {
         name: 'Net Take-Home Pay',
         ...scale((p) => netPay * p),
+        a: result.annualNetPay,
         color: '',
         rowClass: 'font-extrabold bg-zinc-900 text-white border-t-2 border-zinc-900'
       }
@@ -266,13 +278,35 @@
     expenseItems.push({ id: nextExpenseId++, name, amount, recurring });
   }
 
+  const SCENARIO_SUMMARY_KEYS = [
+    'clmNetPay',
+    'annualNetPay',
+    'totalSuperPerPeriod',
+    'annualSuper',
+    'paygTaxSaved',
+    'totalBenefitGotBack'
+  ] as const;
+
+  // Lightweight shape check so malformed stored entries are skipped instead of breaking the Scenarios panel
+  function isSavedScenario(value: unknown): value is SavedScenario {
+    if (!value || typeof value !== 'object') return false;
+    const sc = value as Record<string, unknown>;
+    if (typeof sc.id !== 'string' || typeof sc.name !== 'string') return false;
+    if (!sc.input || typeof sc.input !== 'object') return false;
+    const input = sc.input as Record<string, unknown>;
+    if (input.expenseItems !== undefined && !Array.isArray(input.expenseItems)) return false;
+    if (!sc.summary || typeof sc.summary !== 'object') return false;
+    const summary = sc.summary as Record<string, unknown>;
+    return SCENARIO_SUMMARY_KEYS.every((key) => typeof summary[key] === 'number' && Number.isFinite(summary[key]));
+  }
+
   function loadScenarios(): SavedScenario[] {
     try {
       if (typeof localStorage === 'undefined') return [];
       const raw = localStorage.getItem(SCENARIOS_STORAGE_KEY);
       if (!raw) return [];
       const parsed: unknown = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as SavedScenario[]) : [];
+      return Array.isArray(parsed) ? parsed.filter(isSavedScenario) : [];
     } catch {
       return [];
     }
@@ -363,7 +397,9 @@
     applyLito = inp.applyLito;
     applyMedicare = inp.applyMedicare;
     hasPrivateHealth = inp.hasPrivateHealth;
-    expenseItems = (inp.expenseItems || []).map((i) => ({ ...i }));
+    const loadedItems = (inp.expenseItems || []).map((i) => ({ ...i }));
+    expenseItems = loadedItems;
+    nextExpenseId = nextExpenseIdFor(loadedItems);
     carLeaseEnabled = inp.carLeaseEnabled ?? false;
     carLeaseType = inp.carLeaseType ?? 'ev';
     carLeasePerPeriod = inp.carLeasePerPeriod ?? 0;
@@ -374,14 +410,18 @@
     scenarios = scenarios.filter((s) => s.id !== id);
   }
 
+  function csvField(value: string): string {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+
   function exportCsv() {
     const lines: string[] = ['Pay Item,Weekly,Fortnightly,Monthly,Annual'];
     for (const row of multiPeriodRows) {
       if (row.isSection) {
-        lines.push(`"${row.name}",,,,`);
+        lines.push(`${csvField(row.name)},,,,`);
       } else {
         lines.push(
-          `"${row.name}",${row.w.toFixed(2)},${row.f.toFixed(2)},${row.m.toFixed(2)},${row.a.toFixed(2)}`
+          `${csvField(row.name)},${row.w.toFixed(2)},${row.f.toFixed(2)},${row.m.toFixed(2)},${row.a.toFixed(2)}`
         );
       }
     }
@@ -391,7 +431,7 @@
       lines.push('Name,Net Take-Home (Period),Net Take-Home (Annual),Super (Period),Annual Super,PAYG Tax Saved,Total Benefit');
       for (const sc of scenarios) {
         lines.push(
-          `"${sc.name}",${sc.summary.clmNetPay.toFixed(2)},${sc.summary.annualNetPay.toFixed(2)},${sc.summary.totalSuperPerPeriod.toFixed(2)},${sc.summary.annualSuper.toFixed(2)},${sc.summary.paygTaxSaved.toFixed(2)},${sc.summary.totalBenefitGotBack.toFixed(2)}`
+          `${csvField(sc.name)},${sc.summary.clmNetPay.toFixed(2)},${sc.summary.annualNetPay.toFixed(2)},${sc.summary.totalSuperPerPeriod.toFixed(2)},${sc.summary.annualSuper.toFixed(2)},${sc.summary.paygTaxSaved.toFixed(2)},${sc.summary.totalBenefitGotBack.toFixed(2)}`
         );
       }
     }
@@ -430,6 +470,8 @@
     unitRate: number;
     superMode: SuperMode;
     superRate: number;
+    voluntarySuper: number;
+    workingWeeks: number;
     leaveReserve: number;
     leavePayout: number;
     adminFeeMode: AdminFeeMode;
@@ -463,6 +505,8 @@
       unitRate,
       superMode,
       superRate,
+      voluntarySuper,
+      workingWeeks,
       leaveReserve,
       leavePayout,
       adminFeeMode,
@@ -490,6 +534,8 @@
     unitRate = 0;
     superMode = 'inclusive';
     superRate = 12.0;
+    voluntarySuper = 0;
+    workingWeeks = 52;
     leaveReserve = 0;
     leavePayout = 0;
     adminFeeMode = 'percent';
@@ -525,6 +571,8 @@
     unitRate = previousState.unitRate;
     superMode = previousState.superMode;
     superRate = previousState.superRate;
+    voluntarySuper = previousState.voluntarySuper;
+    workingWeeks = previousState.workingWeeks;
     leaveReserve = previousState.leaveReserve;
     leavePayout = previousState.leavePayout;
     adminFeeMode = previousState.adminFeeMode;

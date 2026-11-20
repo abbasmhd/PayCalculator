@@ -443,7 +443,7 @@ describe('Novated Car Lease', () => {
     expect(withOneOff.annualNetPay).toBeLessThan(withOneOff.clmNetPay * 52);
   });
 
-  it('estimates YTD & end-of-year tax refund or bill', () => {
+  it('estimates a YTD refund when tax withheld exceeds estimated end-of-year tax', () => {
     const refundRes = estimateYtdTaxRefund({
       ytdGross: 100000,
       ytdTaxWithheld: 30000,
@@ -453,10 +453,14 @@ describe('Novated Car Lease', () => {
       applyMedicare: true,
       hasPrivateHealth: true
     });
-    expect(refundRes.estimatedTotalTax).toBeGreaterThan(0);
-    expect(refundRes.refundOrBill).toBeCloseTo(30000 - refundRes.estimatedTotalTax, 2);
-    expect(refundRes.refundOrBill).toBeGreaterThan(0);
+    expect(refundRes.incomeTax).toBeCloseTo(20520, 2);
+    expect(refundRes.medicareLevy).toBeCloseTo(2000, 2);
+    expect(refundRes.mls).toBe(0);
+    expect(refundRes.estimatedTotalTax).toBeCloseTo(22520, 2);
+    expect(refundRes.refundOrBill).toBeCloseTo(7480, 2);
+  });
 
+  it('estimates a YTD bill and applies MLS when there is no private health cover', () => {
     const billRes = estimateYtdTaxRefund({
       ytdGross: 120000,
       ytdTaxWithheld: 10000,
@@ -466,8 +470,25 @@ describe('Novated Car Lease', () => {
       applyMedicare: true,
       hasPrivateHealth: false
     });
+    expect(billRes.incomeTax).toBeCloseTo(26520, 2);
     expect(billRes.mls).toBeCloseTo(120000 * 0.0125, 2);
-    expect(billRes.refundOrBill).toBeLessThan(0);
+    expect(billRes.refundOrBill).toBeCloseTo(-20420, 2);
+  });
+
+  it('uses the correct getAnnualTax argument order so a low-income YTD case is a refund, not a bill', () => {
+    const lowIncomeRes = estimateYtdTaxRefund({
+      ytdGross: 15000,
+      ytdTaxWithheld: 1000,
+      taxYear: '2026-27',
+      residency: 'resident_tft',
+      applyLito: true,
+      applyMedicare: true,
+      hasPrivateHealth: true
+    });
+    expect(lowIncomeRes.incomeTax).toBe(0);
+    expect(lowIncomeRes.lito).toBe(700);
+    expect(lowIncomeRes.estimatedTotalTax).toBeCloseTo(300, 2);
+    expect(lowIncomeRes.refundOrBill).toBeCloseTo(700, 2);
   });
 });
 
