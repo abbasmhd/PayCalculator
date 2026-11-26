@@ -56,15 +56,15 @@
     <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
       <div class="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800 self-start">
         <label for="select-tax-year" class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Tax year:</label>
-        <select id="select-tax-year" bind:value={taxYear} class="bg-transparent text-zinc-900 dark:text-zinc-100 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
-          <option value="2027-28">2027–28 (Stage 3 — 14%)</option>
-          <option value="2026-27">2026–27 (Stage 3)</option>
-          <option value="2025-26">2025–26 (Stage 3)</option>
-          <option value="2024-25">2024–25 (Stage 3)</option>
-          <option value="2023-24">2023–24 (Stage 2)</option>
-          <option value="2022-23">2022–23 (Stage 2)</option>
-          <option value="2021-22">2021–22 (Stage 2)</option>
-          <option value="2020-21">2020–21 (Stage 2)</option>
+        <select id="select-tax-year" bind:value={taxYear} class="scheme-light dark:scheme-dark bg-transparent text-zinc-900 dark:text-zinc-100 text-xs font-semibold py-0.5 pr-1 border-0 focus:ring-0 cursor-pointer">
+          <option value="2027-28" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2027–28 (Stage 3 — 14%)</option>
+          <option value="2026-27" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2026–27 (Stage 3)</option>
+          <option value="2025-26" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2025–26 (Stage 3)</option>
+          <option value="2024-25" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2024–25 (Stage 3)</option>
+          <option value="2023-24" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2023–24 (Stage 2)</option>
+          <option value="2022-23" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2022–23 (Stage 2)</option>
+          <option value="2021-22" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2021–22 (Stage 2)</option>
+          <option value="2020-21" class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">2020–21 (Stage 2)</option>
         </select>
       </div>
 
